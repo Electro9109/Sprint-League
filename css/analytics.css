@@ -1,0 +1,245 @@
+/* ══════════════════════════════════════════════
+   ANALYTICS.CSS — Analytics Page Styles
+   ══════════════════════════════════════════════ */
+
+/* ── HEATMAP ── */
+.heatmap { margin-top: 4px; }
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(52, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 2px;
+}
+
+/* FIX: heat-cell rules were split — hover was orphaned after the responsive block */
+.heat-cell {
+  aspect-ratio: 1;
+  border-radius: 1px;
+  cursor: pointer;
+  transition: outline 0.1s;
+}
+.heat-cell:hover { outline: 1px solid var(--accent); }
+
+.heat-0 { background: var(--surface2); }
+.heat-1 { background: #3d4a0f; }
+.heat-2 { background: #6e8a1a; }
+.heat-3 { background: #a8c929; }
+.heat-4 { background: var(--accent); }
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.heatmap-legend .heat-cell {
+  width: 10px;
+  height: 10px;
+  aspect-ratio: auto;
+  flex-shrink: 0;
+}
+
+/* ── WPM TREND CHART ── */
+.wpm-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 72px;
+  margin-top: 12px;
+}
+
+.wpm-bar {
+  flex: 1;
+  background: var(--accent);
+  opacity: 0.28;
+  border-radius: 1px 1px 0 0;
+  min-height: 4px;
+  transition: opacity 0.3s;
+  cursor: pointer;
+}
+.wpm-bar:hover  { opacity: 0.7; }
+.wpm-bar.active { opacity: 1; box-shadow: 0 0 8px var(--accent); }
+
+.wpm-chart-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 10px;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+/* ── DAILY FOCUS CHART ── */
+.daily-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 120px;
+  margin-top: 8px;
+}
+
+.day-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.day-bar {
+  width: 100%;
+  border-radius: 1px 1px 0 0;
+  min-height: 4px;
+  transition: height 0.5s ease;
+}
+
+.day-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.day-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent3);
+  font-weight: 700;
+}
+
+/* ── PEAK HOURS GRID ── */
+.hour-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.hour-block {
+  padding: 12px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  text-align: center;
+  transition: outline 0.15s;
+}
+.hour-block:hover { outline: 1px solid var(--accent); }
+
+.hour-block span {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.hour-grid-note {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent3);
+  letter-spacing: 1px;
+  margin-top: 14px;
+  line-height: 1.7;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  font-weight: 600;
+}
+
+/* ── WEEKLY REPORT STATS ── */
+.report-stat {
+  padding: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  text-align: center;
+}
+
+.report-num {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.report-num.accent { color: var(--accent); }
+.report-num.blue   { color: var(--accent3); }
+
+.report-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* ── SPRINT HISTORY (JS-populated list) ── */
+.sprint-history {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+}
+
+.sprint-history-item {
+  background: var(--surface);
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: 1fr 120px 100px;
+  gap: 20px;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+.sprint-history-item:hover {
+  background: var(--surface2);
+  transform: translateX(4px);
+}
+
+.sprint-detail-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.sprint-detail-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+.sprint-detail-date {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent3);
+  font-weight: 600;
+  text-align: right;
+  line-height: 1.5;
+}
+.sprint-detail-score {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--accent);
+  text-align: right;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .sprint-history-item {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .sprint-detail-date,
+  .sprint-detail-score { text-align: left; }
+  .heatmap-grid { grid-template-columns: repeat(26, 1fr); }
+}

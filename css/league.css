@@ -1,0 +1,417 @@
+/* ══════════════════════════════════════════════
+   LEAGUE.CSS — League Page Styles
+   ══════════════════════════════════════════════ */
+
+/* ── DIVISION BADGE ── */
+.division-badge {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 2px;
+  margin-top: 6px;
+  text-transform: uppercase;
+}
+
+/* ── LEADERBOARD TABLE ── */
+.leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+}
+
+.league-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 100px 100px;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  background: var(--surface);
+  transition: all 0.2s ease;
+}
+
+.league-row:hover {
+  background: var(--surface2);
+  transform: translateX(4px);
+}
+
+.league-row.current-user {
+  background: rgba(232, 255, 71, 0.1);
+  border-left: 4px solid var(--accent);
+  padding-left: 16px;
+}
+
+.league-row.top-1 {
+  background: rgba(77, 255, 145, 0.08);
+  border-left: 4px solid var(--success);
+  padding-left: 16px;
+}
+
+.league-row.top-2 {
+  background: rgba(71, 200, 255, 0.08);
+  border-left: 4px solid var(--accent3);
+  padding-left: 16px;
+}
+
+.league-row.top-3 {
+  background: rgba(255, 200, 71, 0.08);
+  border-left: 4px solid #ffc847;
+  padding-left: 16px;
+}
+
+/* ── RANK BADGE ── */
+.rank-badge {
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 22px;
+  color: var(--accent);
+  text-align: center;
+  letter-spacing: -1px;
+  min-width: 50px;
+}
+
+.league-row.top-1 .rank-badge {
+  color: var(--success);
+  font-size: 24px;
+}
+
+.league-row.top-2 .rank-badge {
+  color: var(--accent3);
+}
+
+.league-row.top-3 .rank-badge {
+  color: #ffc847;
+}
+
+/* ── USER NAME ── */
+.league-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.league-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.league-row.top-1 .league-avatar {
+  background: var(--success);
+}
+
+.league-row.top-2 .league-avatar {
+  background: var(--accent3);
+}
+
+.league-row.top-3 .league-avatar {
+  background: #ffc847;
+  color: #000;
+}
+
+.league-username {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+
+.league-email {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+}
+
+/* ── STATS ── */
+.league-score,
+.league-sprints {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.5px;
+  text-align: right;
+}
+
+.league-score {
+  color: var(--accent);
+}
+
+.league-sprints {
+  color: var(--accent3);
+}
+
+.league-row.top-1 .league-score {
+  color: var(--success);
+}
+
+.league-row.top-2 .league-score {
+  color: var(--accent3);
+}
+
+.league-row.top-3 .league-score {
+  color: #ffc847;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .league-row {
+    grid-template-columns: 50px 1fr 80px;
+    gap: 12px;
+  }
+
+  .league-sprints {
+    display: none;
+  }
+
+  .rank-badge {
+    font-size: 18px;
+  }
+
+  .league-username {
+    font-size: 14px;
+  }
+
+  .league-score {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .league-row {
+    grid-template-columns: 40px 1fr 60px;
+    padding: 12px 12px;
+    gap: 8px;
+  }
+
+  .rank-badge {
+    font-size: 16px;
+    min-width: 35px;
+  }
+
+  .league-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .league-username {
+    font-size: 13px;
+  }
+
+  .league-email {
+    display: none;
+  }
+
+  .league-score {
+    font-size: 14px;
+  }
+}
+
+.league-rank {
+  font-family: var(--mono);
+  font-size: 15px;
+  color: var(--text);
+  width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+.league-rank.top { color: var(--accent); font-size: 17px; font-weight: 900; }
+
+.league-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 14px;
+  color: #000;
+  flex-shrink: 0;
+}
+
+.league-name {
+  flex: 1;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.league-score {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.league-div {
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 5px 10px;
+  border: 1px solid;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.div-gold   { color: #ffd700; border-color: #ffd700; }
+.div-silver { color: #c0c0c0; border-color: #c0c0c0; }
+.div-bronze { color: #cd7f32; border-color: #cd7f32; }
+
+/* ── DUEL ── */
+.duel-block { padding: 4px 0 0; }
+
+.duel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.duel-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.duel-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 16px;
+  color: #000;
+}
+
+.duel-player-name {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.duel-player-score {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.duel-vs {
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+
+.duel-task {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--text);
+  letter-spacing: 1px;
+  text-align: center;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.duel-bar-wrap {
+  height: 4px;
+  display: flex;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--border);
+}
+.duel-bar-you  { background: var(--accent);  height: 100%; transition: width 0.5s; }
+.duel-bar-them { background: var(--accent2); height: 100%; transition: width 0.5s; }
+
+/* ── SEASON TIMELINE ── */
+.season-row {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.season-row:last-child { border-bottom: none; }
+.season-row.done-week   { color: var(--success); }
+.season-row.active-week { color: var(--accent); }
+
+.season-check        { font-size: 12px; flex-shrink: 0; }
+.season-check.active { color: var(--accent); }
+.season-check.muted  { color: var(--border); }
+
+.season-note {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  letter-spacing: 1px;
+}
+
+/* ── BADGES ── */
+.badge-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 24px;
+  width: 72px;
+  padding: 12px 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  opacity: 0.3;
+  transition: all 0.2s;
+  cursor: default;
+}
+.badge.earned {
+  opacity: 1;
+  border-color: var(--accent);
+}
+.badge.earned:hover {
+  background: rgba(232,255,71,0.06);
+}
+
+.badge span {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  letter-spacing: 1px;
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.badge.earned span { color: var(--accent); font-weight: 800; }
