@@ -4,125 +4,154 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sprint League — Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/dashboard.css">
-  <link rel="stylesheet" href="css/sprint-widget.css">
   <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
+<div id="app">
 
-  <!-- Sprint mode active indicator -->
-  <div class="sprint-mode-indicator" id="sprint-indicator">
-    <span class="smi-dot"></span>
-    SPRINT
-    <span class="smi-time">25:00</span>
-  </div>
-
-  <div id="app">
-    <header class="header">
-      <div class="header-left">
-        <a href="index.html" class="logo" style="text-decoration:none">Sprint<span>League</span></a>
-        <nav class="nav">
-          <a href="index.html"     class="nav-btn active">Dashboard</a>
-          <a href="tasks.html"     class="nav-btn">Tasks</a>
-          <a href="analytics.html" class="nav-btn">Analytics</a>
-          <a href="friends.html"   class="nav-btn">Friends</a>
-          <a href="league.html"    class="nav-btn">League</a>
-        </nav>
+  <!-- ══ HEADER ══ -->
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="logo">Sprint<span>League</span></a>
+      <nav class="nav">
+        <a href="index.html"     class="nav-btn active">Dashboard</a>
+        <a href="tasks.html"     class="nav-btn">Tasks</a>
+        <a href="analytics.html" class="nav-btn">Analytics</a>
+        <a href="friends.html"   class="nav-btn">Friends</a>
+        <a href="league.html"    class="nav-btn">League</a>
+      </nav>
+    </div>
+    <div class="header-right">
+      <div class="user-info">
+        <div class="avatar" id="userAvatar">U</div>
+        <div class="username" id="username">User</div>
       </div>
-      <div class="header-right">
-        <div class="user-info">
-          <div class="avatar" id="userAvatar">U</div>
-          <div class="user-details">
-            <div class="username" id="username">User</div>
-          </div>
-        </div>
-        <button class="logout-btn" id="logoutBtn">Logout</button>
-      </div>
-    </header>
+      <button class="logout-btn" id="logoutBtn">Logout</button>
+    </div>
+  </header>
 
-    <main class="page">
-      <div class="page-header">
-        <h1 class="page-title">
-          <small>// dashboard</small>
-          Welcome Back
-        </h1>
-        <div class="clock-block">
-          <div class="live-clock" id="liveTime">00:00</div>
-          <div class="live-date"  id="liveDate">Loading...</div>
-        </div>
-      </div>
+  <!-- ══ MAIN (auth-gated) ══ -->
+  <main class="page">
 
-      <!-- Quick Stats -->
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-label">Today's Tasks</div>
-          <div class="stat-value accent" id="todayCount">0</div>
-          <div class="stat-sub" id="todayProgress">0 completed</div>
+    <!-- EOD BANNER -->
+    <div class="eod-banner" id="eodBanner">
+      <div class="eod-banner-left">
+        <div class="eod-pip"></div>
+        <div class="eod-banner-info">
+          <span class="eod-banner-label">End of Day</span>
+          <span class="eod-banner-target" id="eodTarget">18:00</span>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Sprint Score</div>
-          <div class="stat-value accent" id="sprintScore">0</div>
-          <div class="stat-sub" id="sprintMeta">Last 7 days</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Streak</div>
-          <div class="stat-value blue" id="streakCount">0</div>
-          <div class="stat-sub">Days active</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Sprints</div>
-          <div class="stat-value accent" id="totalSprints">0</div>
-          <div class="stat-sub" id="avgScore">0 avg score</div>
+        <div class="eod-banner-sep"></div>
+        <div class="eod-countdown">
+          <span class="eod-cd-val" id="eodH">—</span><span class="eod-cd-unit">h</span>
+          <span class="eod-cd-val" id="eodM">—</span><span class="eod-cd-unit">m</span>
+          <span class="eod-cd-rest">remaining</span>
         </div>
       </div>
-
-      <div class="grid-2">
-        <!-- Today's Tasks -->
-        <div class="panel">
-          <div class="panel-title">
-            <div class="panel-title-left">
-              <span class="panel-dot"></span>Today's Tasks
-            </div>
-            <a href="tasks.html" style="font-family:var(--mono);font-size:10px;color:var(--accent);text-decoration:none;letter-spacing:1px;font-weight:700;opacity:0.8;transition:opacity 0.2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">+ ADD →</a>
-          </div>
-          <div id="todayTasksList" class="task-list">
-            <div class="empty-state">No tasks yet. <a href="tasks.html" style="color:var(--accent);text-decoration:none">Create one →</a></div>
-          </div>
+      <div class="eod-banner-right">
+        <span class="eod-task-stat" id="eodTaskLabel">0 / 0 done</span>
+        <div class="eod-track">
+          <div class="eod-fill" id="eodFill" style="width:0%"></div>
         </div>
+      </div>
+    </div>
 
-        <!-- Recent Sprints -->
-        <div class="panel">
-          <div class="panel-title">
-            <div class="panel-title-left">
-              <span class="panel-dot" style="background:var(--accent3);box-shadow:0 0 8px var(--accent3)"></span>
-              Recent Sprints
-            </div>
-          </div>
-          <div id="sprintList" class="sprint-list">
-            <div class="empty-state">No sprints yet. Use the ⚡ widget →</div>
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <p class="page-eyebrow">// dashboard</p>
+        <h1 class="page-title" id="pageTitle">Welcome Back</h1>
+      </div>
+      <div class="clock-block">
+        <div class="live-clock" id="liveTime">00:00</div>
+        <div class="live-date"  id="liveDate">—</div>
+      </div>
+    </div>
+
+    <!-- SPRINT STATUS -->
+    <div class="sprint-card" id="sprintCard">
+      <div class="sprint-card-pulse" id="sprintPulse"></div>
+      <div class="sprint-card-icon">⚡</div>
+      <div class="sprint-card-body">
+        <div class="sprint-card-title" id="sprintCardTitle">No sprint active</div>
+        <div class="sprint-card-sub"   id="sprintCardSub">Start a sprint to enter deep focus mode</div>
+      </div>
+      <a href="tasks.html" class="sprint-card-cta" id="sprintCardCta">
+        Start Sprint
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Today's Tasks</div>
+        <div class="stat-value accent" id="todayCount">0</div>
+        <div class="stat-sub" id="todayProgress">0 completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Sprint Score</div>
+        <div class="stat-value yellow" id="sprintScore">0</div>
+        <div class="stat-sub" id="sprintMeta">Last 7 days</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Streak</div>
+        <div class="stat-value blue" id="streakCount">0</div>
+        <div class="stat-sub">Days active</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Sprints</div>
+        <div class="stat-value yellow" id="totalSprints">0</div>
+        <div class="stat-sub" id="avgScore">0 avg score</div>
+      </div>
+    </div>
+
+    <!-- 2-COL GRID -->
+    <div class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Today's Tasks</span>
+          <a href="tasks.html" class="panel-action">+ Add task</a>
+        </div>
+        <div id="todayTasksList" class="task-list">
+          <div class="empty-state">
+            <span class="empty-icon">📋</span>
+            <span class="empty-text">No tasks today.</span>
+            <a href="tasks.html" class="empty-cta">Add one →</a>
           </div>
         </div>
       </div>
-    </main>
-  </div>
 
-  <!-- Sprint Widget & Auth -->
-  <div id="sprint-widget-root"></div>
-  <div id="auth-root"></div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Recent Sprints</span>
+        </div>
+        <div id="sprintList" class="sprint-list">
+          <div class="empty-state">
+            <span class="empty-icon">⚡</span>
+            <span class="empty-text">No sprints yet.</span>
+            <a href="tasks.html" class="empty-cta">Start one →</a>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <script src="js/lib/db.js"></script>
-  <script src="js/lib/auth.js"></script>
-  <script src="js/lib/utils.js"></script>
-  <script src="js/clock.js"></script>
-  <script src="js/dashboard.js"></script>
-  <script src="js/app.js"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="js/auth-ui.js"></script>
-  <script src="js/sprint-widget.js"></script>
+  </main>
+</div>
+
+<div id="auth-root"></div>
+<script src="js/lib/db.js"></script>
+<script src="js/lib/auth.js"></script>
+<script src="js/lib/utils.js"></script>
+<script src="js/clock.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/app.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="js/auth-ui.js"></script>
 </body>
 </html>

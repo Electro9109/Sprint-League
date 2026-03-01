@@ -4,197 +4,173 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sprint League — Analytics</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/analytics.css">
   <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
-  <div id="app">
-    <header class="header">
-      <div class="header-left">
-        <a href="index.html" class="logo" style="text-decoration:none">Sprint<span>League</span></a>
-        <nav class="nav">
-          <a href="index.html"     class="nav-btn">Dashboard</a>
-          <a href="tasks.html"     class="nav-btn">Tasks</a>
-          <a href="analytics.html" class="nav-btn active">Analytics</a>
-          <a href="friends.html"   class="nav-btn">Friends</a>
-          <a href="league.html"    class="nav-btn">League</a>
-        </nav>
-      </div>
-      <div class="header-right">
-        <div class="user-info">
-          <div class="avatar" id="userAvatar">U</div>
-          <div class="user-details">
-            <div class="username" id="username">User</div>
-          </div>
-        </div>
-        <button class="logout-btn" id="logoutBtn">Logout</button>
-      </div>
-    </header>
+<div id="app">
 
-    <main class="page">
-      <div class="page-header">
-        <h1 class="page-title">
-          <small>// performance intel</small>
-          Analytics
-        </h1>
-        <div class="clock-block">
-          <div class="live-clock" id="liveTime">00:00</div>
-          <div class="live-date"  id="liveDate">Loading...</div>
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="logo">Sprint<span>League</span></a>
+      <nav class="nav">
+        <a href="index.html"     class="nav-btn">Dashboard</a>
+        <a href="tasks.html"     class="nav-btn">Tasks</a>
+        <a href="analytics.html" class="nav-btn active">Analytics</a>
+        <a href="friends.html"   class="nav-btn">Friends</a>
+        <a href="league.html"    class="nav-btn">League</a>
+      </nav>
+    </div>
+    <div class="header-right">
+      <div class="user-info">
+        <div class="avatar" id="userAvatar">U</div>
+        <div class="username" id="username">User</div>
+      </div>
+      <button class="logout-btn" id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <main class="page">
+
+    <!-- EOD BANNER -->
+    <div class="eod-banner" id="eodBanner">
+      <div class="eod-banner-left">
+        <div class="eod-pip"></div>
+        <div class="eod-banner-info">
+          <span class="eod-banner-label">End of Day</span>
+          <span class="eod-banner-target" id="eodTarget">18:00</span>
+        </div>
+        <div class="eod-banner-sep"></div>
+        <div class="eod-countdown">
+          <span class="eod-cd-val" id="eodH">—</span><span class="eod-cd-unit">h</span>
+          <span class="eod-cd-val" id="eodM">—</span><span class="eod-cd-unit">m</span>
+          <span class="eod-cd-rest">remaining</span>
         </div>
       </div>
-
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-label">Total Sprints</div>
-          <div class="stat-value accent" id="totalSprintsAna">0</div>
-          <div class="stat-sub">All time</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Avg Score</div>
-          <div class="stat-value accent" id="avgScoreAna">0</div>
-          <div class="stat-sub">Per sprint</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Score</div>
-          <div class="stat-value blue" id="totalScoreAna">0</div>
-          <div class="stat-sub">Lifetime</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Streak</div>
-          <div class="stat-value accent" id="streakAna">0</div>
-          <div class="stat-sub">Days active</div>
-        </div>
+      <div class="eod-banner-right">
+        <span class="eod-task-stat" id="eodTaskLabel">0 / 0 done</span>
+        <div class="eod-track"><div class="eod-fill" id="eodFill" style="width:0%"></div></div>
       </div>
+    </div>
 
-      <div class="panel" style="margin-bottom:20px">
-        <div class="panel-title">
-          <div class="panel-title-left"><span class="panel-dot"></span>Recent Sprints</div>
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <p class="page-eyebrow">// performance intel</p>
+        <h1 class="page-title">Analytics</h1>
+      </div>
+      <div class="clock-block">
+        <div class="live-clock" id="liveTime">00:00</div>
+        <div class="live-date"  id="liveDate">—</div>
+      </div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Sprints</div>
+        <div class="stat-value yellow" id="totalSprintsAna">0</div>
+        <div class="stat-sub">All time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Score</div>
+        <div class="stat-value yellow" id="avgScoreAna">0</div>
+        <div class="stat-sub">Per sprint</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Score</div>
+        <div class="stat-value blue" id="totalScoreAna">0</div>
+        <div class="stat-sub">Lifetime</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Streak</div>
+        <div class="stat-value yellow" id="streakAna">0</div>
+        <div class="stat-sub">Days active</div>
+      </div>
+    </div>
+
+    <!-- RECENT SPRINTS + CATEGORY BREAKDOWN -->
+    <div class="content-grid" style="margin-bottom:20px">
+
+      <!-- Recent Sprints -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Recent Sprints</span>
+          <span class="panel-stat" id="sprintCountBadge">0 total</span>
         </div>
         <div id="recentSprintsList" class="sprint-list">
-          <div class="empty-state">No sprints yet. Complete some sprints to see analytics!</div>
-        </div>
-      </div>
-
-      <div class="grid-2" style="margin-bottom:20px">
-        <div class="panel">
-          <div class="panel-title">
-            <div class="panel-title-left"><span class="panel-dot" style="background:var(--success);box-shadow:0 0 8px var(--success)"></span>Activity — Last 52 Weeks</div>
-          </div>
-          <div class="heatmap">
-            <div class="heatmap-grid" id="heatmapGrid"></div>
-          </div>
-          <div class="heatmap-legend">
-            Less
-            <div class="heat-cell heat-0"></div>
-            <div class="heat-cell heat-1"></div>
-            <div class="heat-cell heat-2"></div>
-            <div class="heat-cell heat-3"></div>
-            <div class="heat-cell heat-4"></div>
-            More
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-title">
-            <div class="panel-title-left"><span class="panel-dot" style="background:var(--accent3);box-shadow:0 0 8px var(--accent3)"></span>Score by Category</div>
-          </div>
-          <div class="score-chart" id="categoryChart">
-            <div class="empty-state" style="padding:24px">Complete sprints to see category breakdown</div>
+          <div class="empty-state">
+            <span class="empty-icon">⚡</span>
+            <span class="empty-text">No sprints yet.</span>
+            <a href="tasks.html" class="empty-cta">Start your first sprint →</a>
           </div>
         </div>
       </div>
 
-      <div class="grid-2">
-        <div class="panel">
-          <div class="panel-title">
-            <div class="panel-title-left"><span class="panel-dot" style="background:var(--accent4);box-shadow:0 0 8px var(--accent4)"></span>Daily Focus</div>
-          </div>
-          <div class="daily-chart">
-            <div class="day-bar-wrap">
-              <div class="day-bar" style="height:62%;background:var(--accent3)"></div>
-              <div class="day-label">MON</div>
-            </div>
-            <div class="day-bar-wrap">
-              <div class="day-bar" style="height:88%;background:var(--accent)"></div>
-              <div class="day-label">TUE</div>
-            </div>
-            <div class="day-bar-wrap">
-              <div class="day-bar" style="height:74%;background:var(--accent3)"></div>
-              <div class="day-label">WED</div>
-            </div>
-            <div class="day-bar-wrap">
-              <div class="day-bar" style="height:95%;background:var(--accent)"></div>
-              <div class="day-label">THU</div>
-            </div>
-            <div class="day-bar-wrap">
-              <div class="day-bar" style="height:74%;background:var(--accent3)"></div>
-              <div class="day-label">FRI</div>
-            </div>
-            <div class="day-bar-wrap">
-              <div class="day-bar" style="height:40%;background:var(--border2)"></div>
-              <div class="day-label">SAT</div>
-            </div>
-            <div class="day-bar-wrap">
-              <div class="day-bar" style="height:4%;background:var(--border2)"></div>
-              <div class="day-label">SUN</div>
-            </div>
-          </div>
+      <!-- Category Breakdown -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Category Breakdown</span>
         </div>
-
-        <div class="panel">
-          <div class="panel-title">
-            <div class="panel-title-left"><span class="panel-dot" style="background:var(--warning);box-shadow:0 0 8px var(--warning)"></span>Peak Hours</div>
+        <div id="categoryBreakdown" class="breakdown-list">
+          <div class="empty-state">
+            <span class="empty-icon">📊</span>
+            <span class="empty-text">Complete sprints to see breakdown.</span>
           </div>
-          <div class="hour-grid">
-            <div class="hour-block heat-1"><span>6am</span></div>
-            <div class="hour-block heat-2"><span>7am</span></div>
-            <div class="hour-block heat-3"><span>8am</span></div>
-            <div class="hour-block heat-4"><span>9am</span></div>
-            <div class="hour-block heat-4"><span>10am</span></div>
-            <div class="hour-block heat-3"><span>11am</span></div>
-            <div class="hour-block heat-2"><span>12pm</span></div>
-            <div class="hour-block heat-1"><span>1pm</span></div>
-            <div class="hour-block heat-2"><span>2pm</span></div>
-            <div class="hour-block heat-3"><span>3pm</span></div>
-            <div class="hour-block heat-3"><span>4pm</span></div>
-            <div class="hour-block heat-2"><span>5pm</span></div>
-            <div class="hour-block heat-1"><span>6pm</span></div>
-            <div class="hour-block heat-0"><span>7pm</span></div>
-            <div class="hour-block heat-0"><span>8pm</span></div>
-            <div class="hour-block heat-0"><span>9pm</span></div>
-          </div>
-          <div class="hour-grid-note">Based on sprint start times · Peak: 9–11am</div>
         </div>
       </div>
-    </main>
-  </div>
 
-  <div id="auth-root"></div>
-  <script src="js/lib/db.js"></script>
-  <script src="js/lib/auth.js"></script>
-  <script src="js/lib/utils.js"></script>
-  <script src="js/clock.js"></script>
-  <script src="js/analytics.js"></script>
-  <script src="js/app.js"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="js/auth-ui.js"></script>
-  <script>
-    // Generate heatmap
-    (function() {
-      const grid = document.getElementById('heatmapGrid');
-      if (!grid) return;
-      const levels = [0,0,1,0,2,1,3,0,1,2,4,3,2,1,0,0,2,3,4,4,3,2,1,0,0,1,2,3,2,1,0,0,0,1,0,2,1,0,3,2,4,3,1,0,1,2,3,4,3,2,1,0];
-      let html = '';
-      for (let i = 0; i < 364; i++) {
-        html += `<div class="heat-cell heat-${levels[i % levels.length]}" title="Sprint activity"></div>`;
-      }
-      grid.innerHTML = html;
-    })();
-  </script>
+    </div>
+
+    <!-- ACTIVITY HEATMAP -->
+    <div class="panel" style="margin-bottom:20px">
+      <div class="panel-header">
+        <span class="panel-title">Activity — Last 52 Weeks</span>
+        <span class="panel-stat" id="activeDaysBadge">0 active days</span>
+      </div>
+      <div class="heatmap-wrap">
+        <div class="heatmap-grid" id="heatmapGrid"></div>
+      </div>
+      <div class="heatmap-legend">
+        <span>Less</span>
+        <div class="heat-cell heat-0"></div>
+        <div class="heat-cell heat-1"></div>
+        <div class="heat-cell heat-2"></div>
+        <div class="heat-cell heat-3"></div>
+        <div class="heat-cell heat-4"></div>
+        <span>More</span>
+      </div>
+    </div>
+
+    <!-- SCORE OVER TIME BAR CHART -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Score Trend — Last 14 Sprints</span>
+        <span class="panel-stat" id="avgScoreBadge">Avg: 0 pts</span>
+      </div>
+      <div class="score-chart-wrap">
+        <div class="score-chart" id="scoreChart">
+          <div class="chart-empty">Complete sprints to see your score trend</div>
+        </div>
+        <div class="score-chart-labels" id="scoreChartLabels"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="auth-root"></div>
+<script src="js/lib/db.js"></script>
+<script src="js/lib/auth.js"></script>
+<script src="js/lib/utils.js"></script>
+<script src="js/clock.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/app.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="js/auth-ui.js"></script>
 </body>
 </html>

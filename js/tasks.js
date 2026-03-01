@@ -1,370 +1,369 @@
 /**
- * tasks.js — Task CRUD + Sprint Focus Overlay
- * Fixed: userId field, renderTask CSS classes, elapsed timer, progress bar
+ * tasks.js — Task Page Logic
+ * Instant render · toast feedback · sprint card · EOD bar
  */
 
 class TasksPage {
   constructor() {
-    this.user        = auth.getUser();
+    this.user              = auth.getUser();
     this.currentSprintTask = null;
     this.sprintTimer       = null;
     this.sprintSeconds     = 0;
-    this.sprintTotalSecs   = 25 * 60;
-    this.elapsedTimer      = null;
-    this.elapsedSeconds    = 0;
-    this.isPaused          = false;
+    this.sprintTotal       = 25 * 60;
     this.init();
-  }
-
-  get uid() {
-    // auth stores user as { userId, username, email, ... }
-    return this.user?.userId || this.user?.id;
   }
 
   async init() {
     if (!this.user) return;
     this.updateHeader();
-    this.setupTaskForm();
-    this.setupIntensityCards();
+    this.setupForm();
     this.setupSprintControls();
     await this.loadTasks();
   }
 
   updateHeader() {
-    const av = document.getElementById('userAvatar');
-    const un = document.getElementById('username');
-    const name = this.user.username || this.user.displayName || this.user.email || 'User';
-    if (av) av.textContent = name.slice(0, 2).toUpperCase();
-    if (un) un.textContent = name;
+    const name    = this.user.username || this.user.displayName || this.user.email || 'User';
+    const avatarEl = document.getElementById('userAvatar');
+    const userEl   = document.getElementById('username');
+    if (avatarEl) avatarEl.textContent = name.slice(0, 2).toUpperCase();
+    if (userEl)   userEl.textContent   = name;
   }
 
-  setupTaskForm() {
+  // ── FORM ─────────────────────────────────────────
+  setupForm() {
     const form = document.getElementById('taskForm');
+    const btn  = document.getElementById('addTaskBtn');
     if (!form) return;
-    form.addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const title = document.getElementById('taskTitle').value.trim();
-      if (!title) return;
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const titleInput = document.getElementById('taskTitle');
+      const title = titleInput?.value?.trim();
+      if (!title) {
+        if (titleInput) {
+          titleInput.style.borderColor = 'var(--red)';
+          titleInput.focus();
+          setTimeout(() => { titleInput.style.borderColor = ''; }, 1500);
+        }
+        return;
+      }
+
+      // Loading state
+      if (btn) { btn.textContent = 'Adding…'; btn.classList.add('loading'); }
 
       const task = {
-        id:         utils.generateId(),
-        userId:     this.uid,
+        id:          utils.generateId(),
+        userId:      this.user.id || this.user.userId,
         title,
-        category:   document.getElementById('taskCategory').value,
-        difficulty: document.getElementById('taskDifficulty').value,
-        notes:      document.getElementById('taskNotes')?.value?.trim() || '',
-        status:     'pending',
-        createdAt:  new Date().toISOString(),
+        category:    document.getElementById('taskCategory')?.value || 'deep-work',
+        difficulty:  document.getElementById('taskDifficulty')?.value || 'medium',
+        notes:       document.getElementById('taskNotes')?.value || '',
+        status:      'pending',
+        createdAt:   new Date().toISOString(),
         completedAt: null,
       };
 
       try {
         await db.addRecord('tasks', task);
         form.reset();
-        await this.loadTasks();
-        utils.showNotification('Task added! ✓', 'success');
 
-        // Animate the new task item in
-        const list = document.getElementById('tasksList');
-        if (list && list.firstElementChild) {
-          list.firstElementChild.style.animation = 'taskSlideIn 0.3s ease';
+        // Flash the panel
+        const panel = form.closest('.panel');
+        if (panel) panel.classList.add('form-success');
+        setTimeout(() => panel?.classList.remove('form-success'), 800);
+
+        await this.loadTasks();
+
+        // Animate the newly added item
+        const first = document.querySelector('#tasksList .task-item');
+        if (first) {
+          first.classList.add('just-added');
+          setTimeout(() => first.classList.remove('just-added'), 600);
         }
+
+        utils.showNotification(`"${task.title}" added!`, 'success');
       } catch (err) {
-        console.error('Failed to create task:', err);
-        utils.showNotification('Failed to create task', 'error');
+        console.error('addTask:', err);
+        utils.showNotification('Failed to add task — please try again', 'error');
+      } finally {
+        if (btn) { btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Add Task`; btn.classList.remove('loading'); }
       }
     });
   }
 
-  setupIntensityCards() {
-    document.querySelectorAll('.intensity-card').forEach(card => {
-      card.addEventListener('click', () => {
-        document.querySelectorAll('.intensity-card').forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
-      });
-    });
-  }
-
+  // ── LOAD / RENDER ─────────────────────────────────
   async loadTasks() {
     try {
-      const tasks      = await db.queryByIndex('tasks', 'userId', this.uid);
-      const active     = tasks.filter(t => t.status !== 'archived');
-      const completed  = active.filter(t => t.status === 'completed').length;
-      const total      = active.length;
-      const pct        = total > 0 ? Math.round((completed / total) * 100) : 0;
+      const uid    = this.user.id || this.user.userId;
+      const tasks  = await db.queryByIndex('tasks', 'userId', uid);
+      const active = tasks.filter(t => t.status !== 'archived');
+      const done   = active.filter(t => t.status === 'completed').length;
+      const total  = active.length;
+      const pct    = total > 0 ? Math.round((done / total) * 100) : 0;
 
-      const progressText    = document.getElementById('progressText');
-      const progressPercent = document.getElementById('progressPercent');
-      const progressBar     = document.getElementById('progressBar');
+      // Progress
+      const txtEl  = document.getElementById('progressText');
+      const pctEl  = document.getElementById('progressPercent');
+      const barEl  = document.getElementById('progressBar');
+      if (txtEl) txtEl.textContent  = `${done} of ${total} tasks completed`;
+      if (pctEl) pctEl.textContent  = pct + '%';
+      if (barEl) barEl.style.width  = pct + '%';
 
-      if (progressText)    progressText.textContent    = `${completed} of ${total} tasks completed`;
-      if (progressPercent) progressPercent.textContent = pct + '%';
-      if (progressBar)     progressBar.style.width     = pct + '%';
+      // EOD bar
+      if (window.updateEodProgress) window.updateEodProgress(done, total);
 
+      // List
       const list = document.getElementById('tasksList');
       if (!list) return;
 
       if (active.length === 0) {
-        list.innerHTML = `<div class="empty-state">No tasks yet. Add one above to get started! 🚀</div>`;
+        list.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-icon">🎯</span>
+            <span class="empty-text">No tasks yet.</span>
+            <span class="empty-cta-text">Add one to get started!</span>
+          </div>`;
         return;
       }
 
-      // Sort: pending first, then completed
-      const sorted = [...active].sort((a, b) => {
-        if (a.status === b.status) return new Date(b.createdAt) - new Date(a.createdAt);
-        return a.status === 'pending' ? -1 : 1;
-      });
-
-      list.innerHTML = sorted.map(t => this.renderTask(t)).join('');
-    } catch (err) {
-      console.error('loadTasks:', err);
-    }
+      const sorted = [...active].sort((a, b) =>
+        a.status === b.status
+          ? new Date(b.createdAt) - new Date(a.createdAt)
+          : a.status === 'pending' ? -1 : 1
+      );
+      list.innerHTML = sorted.map((t, i) => this._renderTask(t, i)).join('');
+    } catch (e) { console.error('loadTasks:', e); }
   }
 
-  renderTask(task) {
-    const done = task.status === 'completed';
-    const catColors = {
-      'deep-work': 'var(--accent)',
-      'creative':  'var(--accent3)',
-      'learning':  'var(--accent4)',
-      'meeting':   'var(--accent2)',
-      'admin':     'var(--text2)',
-    };
-    const color     = catColors[task.category] || 'var(--text2)';
-    const date      = task.completedAt
-      ? `<span style="color:var(--success);font-size:10px">✓ done</span>`
-      : `<span>${utils.formatDate(task.createdAt)}</span>`;
-
+  _renderTask(task, idx) {
+    const done  = task.status === 'completed';
+    const delay = Math.min(idx * 35, 280);
     return `
-    <div class="task-row ${done ? 'completed' : ''}" data-id="${task.id}" style="animation: taskSlideIn 0.3s ease both">
-      <div class="task-row-check ${done ? 'done' : ''}" onclick="tasksPage.toggleTask('${task.id}')">
-        ${done ? '✓' : ''}
-      </div>
-      <div class="task-row-content">
-        <div class="task-row-title">${this._escape(task.title)}</div>
-        <div class="task-row-meta">
-          <span class="task-row-tag ${task.category}" style="border-color:${color};color:${color}">
-            ${task.category.replace('-',' ')}
-          </span>
-          <span class="task-row-diff ${task.difficulty}">${task.difficulty}</span>
-          ${task.notes ? `<span style="font-size:11px;color:var(--muted)">· ${this._escape(task.notes)}</span>` : ''}
-          ${date}
+      <div class="task-item ${done ? 'completed' : ''}"
+           data-id="${task.id}" style="animation-delay:${delay}ms">
+        <div class="task-check ${done ? 'done' : ''}"
+             onclick="tasksPage.toggleTask('${task.id}')">
+          ${done ? '✓' : ''}
         </div>
-      </div>
-      <div class="task-row-actions">
-        ${!done ? `<button class="btn-sprint" onclick="tasksPage.startSprint('${task.id}', '${this._escape(task.title)}')">⚡ Sprint</button>` : ''}
-        <button class="btn-delete" onclick="tasksPage.deleteTask('${task.id}')">✕</button>
-      </div>
-    </div>`;
+        <div class="task-content">
+          <div class="task-title">${this._esc(task.title)}</div>
+          <div class="task-meta">
+            <span class="task-tag tag-${task.category}">${task.category.replace('-',' ')}</span>
+            <span class="task-difficulty ${task.difficulty}">${task.difficulty}</span>
+            ${task.notes ? `<span class="task-tag" title="${this._esc(task.notes)}">note</span>` : ''}
+          </div>
+        </div>
+        <div class="task-actions">
+          ${!done
+            ? `<button class="btn btn-sprint"
+                onclick="tasksPage.startSprint('${task.id}','${this._esc(task.title).replace(/'/g,"&#39;")}')">
+                ⚡ Sprint
+               </button>`
+            : ''}
+          <button class="btn danger"
+                  onclick="tasksPage.deleteTask('${task.id}')">✕</button>
+        </div>
+      </div>`;
   }
 
-  _escape(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+  _esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  async toggleTask(taskId) {
+  // ── TOGGLE / DELETE ───────────────────────────────
+  async toggleTask(id) {
     try {
-      const task = await db.getRecord('tasks', taskId);
+      const task       = await db.getRecord('tasks', id);
       task.status      = task.status === 'completed' ? 'pending' : 'completed';
       task.completedAt = task.status === 'completed' ? new Date().toISOString() : null;
       await db.updateRecord('tasks', task);
       await this.loadTasks();
-    } catch (err) {
-      console.error('toggleTask:', err);
-    }
-  }
-
-  async deleteTask(taskId) {
-    if (!confirm('Delete this task?')) return;
-    try {
-      await db.deleteRecord('tasks', taskId);
-      await this.loadTasks();
-    } catch (err) {
-      console.error('deleteTask:', err);
-    }
-  }
-
-  // ── SPRINT ──────────────────────────────────────────────────
-
-  startSprint(taskId, taskTitle) {
-    this.currentSprintTask  = { id: taskId, title: taskTitle };
-    this.sprintTotalSecs    = 25 * 60;
-    this.sprintSeconds      = this.sprintTotalSecs;
-    this.elapsedSeconds     = 0;
-    this.isPaused           = false;
-    this.showFocusOverlay();
-    this.runSprintTimer();
-  }
-
-  showFocusOverlay() {
-    const overlay = document.getElementById('focusOverlay');
-    if (!overlay) return;
-    overlay.classList.add('active');
-    document.body.classList.add('in-focus');
-
-    // Populate
-    const nameEl  = document.getElementById('focusTaskName');
-    const timeEl  = document.getElementById('focusTimer');
-    const wpmEl   = document.getElementById('focusWPM');
-    const scoreEl = document.getElementById('focusScore');
-    const pctEl   = document.getElementById('focusPct');
-    const barEl   = document.getElementById('focusBar');
-
-    if (nameEl)  nameEl.textContent  = this.currentSprintTask.title;
-    if (timeEl)  timeEl.textContent  = '25:00';
-    if (wpmEl)   wpmEl.textContent   = '00:00';
-    if (scoreEl) scoreEl.textContent = '+0';
-    if (pctEl)   pctEl.textContent   = '0%';
-    if (barEl)   barEl.style.width   = '0%';
-
-    this._boundKeyHandler = this.focusKeyHandler.bind(this);
-    document.addEventListener('keydown', this._boundKeyHandler);
-  }
-
-  focusKeyHandler(ev) {
-    if (ev.key === 'Escape' || (ev.ctrlKey && ev.key === 'w') || (ev.metaKey && ev.key === 'w')) {
-      ev.preventDefault();
-    }
-  }
-
-  setFocusInactive() {
-    const overlay = document.getElementById('focusOverlay');
-    if (overlay) {
-      overlay.classList.remove('active');
-      document.body.classList.remove('in-focus');
-    }
-    if (this._boundKeyHandler) {
-      document.removeEventListener('keydown', this._boundKeyHandler);
-    }
-  }
-
-  runSprintTimer() {
-    clearInterval(this.sprintTimer);
-    clearInterval(this.elapsedTimer);
-
-    // Elapsed counter
-    this.elapsedTimer = setInterval(() => {
-      if (this.isPaused) return;
-      this.elapsedSeconds++;
-      const wpmEl = document.getElementById('focusWPM');
-      if (wpmEl) wpmEl.textContent = utils.formatTime(this.elapsedSeconds);
-    }, 1000);
-
-    // Countdown
-    this.sprintTimer = setInterval(() => {
-      if (this.isPaused) return;
-      this.sprintSeconds--;
-
-      const timerEl  = document.getElementById('focusTimer');
-      const barEl    = document.getElementById('focusBar');
-      const pctEl    = document.getElementById('focusPct');
-      const scoreEl  = document.getElementById('focusScore');
-
-      if (timerEl) {
-        timerEl.textContent = utils.formatTime(this.sprintSeconds);
-        // Warning pulse when < 2min
-        if (this.sprintSeconds < 120) timerEl.classList.add('warning');
-        else timerEl.classList.remove('warning');
+      if (task.status === 'completed') {
+        utils.showNotification(`"${task.title}" complete! ✓`, 'success');
       }
+    } catch (e) {
+      console.error('toggleTask:', e);
+      utils.showNotification('Failed to update task', 'error');
+    }
+  }
 
-      const pct = ((this.sprintTotalSecs - this.sprintSeconds) / this.sprintTotalSecs) * 100;
-      if (barEl)   barEl.style.width   = pct.toFixed(1) + '%';
-      if (pctEl)   pctEl.textContent   = Math.round(pct) + '%';
+  async deleteTask(id) {
+    let title = '';
+    try { title = (await db.getRecord('tasks', id))?.title || 'Task'; } catch(_){}
+    if (!confirm(`Delete "${title}"?`)) return;
+    try {
+      await db.deleteRecord('tasks', id);
+      await this.loadTasks();
+      utils.showNotification(`"${title}" deleted`, 'warn');
+    } catch (e) {
+      console.error('deleteTask:', e);
+      utils.showNotification('Failed to delete task', 'error');
+    }
+  }
 
-      // Live score preview
-      const partialScore = Math.round(utils.calculateScore('medium', 0, true) * (pct / 100));
-      if (scoreEl) scoreEl.textContent = '+' + partialScore;
+  // ── SPRINT ────────────────────────────────────────
+  startSprint(taskId, taskTitle) {
+    this.currentSprintTask = { id: taskId, title: taskTitle };
+    this.sprintSeconds     = this.sprintTotal;
+    this._showFocusOverlay();
+    this._updateSprintCard(true, taskTitle);
+    this._runTimer();
+  }
+
+  stopSprintFromWidget() {
+    if (!confirm('Exit sprint? You will lose 50 points.')) return;
+    clearInterval(this.sprintTimer);
+    this._hideFocusOverlay();
+    this._updateSprintCard(false);
+    utils.showNotification('Sprint exited. −50 points.', 'warn');
+    this.loadTasks();
+  }
+
+  _updateSprintCard(active, title = '') {
+    const card    = document.getElementById('sprintCard');
+    const titleEl = document.getElementById('sprintCardTitle');
+    const subEl   = document.getElementById('sprintCardSub');
+    const timerEl = document.getElementById('sprintCardTimer');
+    const stopEl  = document.getElementById('sprintCardStop');
+
+    if (active) {
+      card?.classList.add('active');
+      if (titleEl)  titleEl.textContent = title || 'Sprint active';
+      if (subEl)    subEl.textContent   = '25-minute focus session in progress';
+      if (timerEl)  timerEl.style.display = 'block';
+      if (stopEl)   stopEl.style.display  = 'inline-flex';
+    } else {
+      card?.classList.remove('active');
+      if (titleEl)  titleEl.textContent = 'No sprint active';
+      if (subEl)    subEl.textContent   = 'Select a task below and hit Start Sprint';
+      if (timerEl)  { timerEl.style.display = 'none'; timerEl.textContent = '25:00'; }
+      if (stopEl)   stopEl.style.display  = 'none';
+    }
+  }
+
+  _showFocusOverlay() {
+    const ov = document.getElementById('focusOverlay');
+    if (!ov) return;
+    ov.classList.add('active');
+    document.body.classList.add('in-focus');
+    document.getElementById('focusTaskName').textContent = this.currentSprintTask.title;
+    document.getElementById('focusTimer').textContent    = '25:00';
+    document.getElementById('focusWPM').textContent      = '0';
+    document.getElementById('focusScore').textContent    = '0';
+    document.getElementById('focusBar').style.width      = '0%';
+    document.addEventListener('keydown', this._focusKey);
+  }
+
+  _hideFocusOverlay() {
+    const ov = document.getElementById('focusOverlay');
+    if (ov) { ov.classList.remove('active'); document.body.classList.remove('in-focus'); }
+    document.removeEventListener('keydown', this._focusKey);
+  }
+
+  _focusKey(e) {
+    if (e.key === 'Escape' || (e.ctrlKey && e.key === 'w') || (e.metaKey && e.key === 'w')) {
+      e.preventDefault();
+    }
+  }
+
+  _runTimer() {
+    clearInterval(this.sprintTimer);
+    this.sprintTimer = setInterval(() => {
+      this.sprintSeconds--;
+      const min = Math.floor(this.sprintSeconds / 60);
+      const sec = this.sprintSeconds % 60;
+      const str = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+      const pct = ((this.sprintTotal - this.sprintSeconds) / this.sprintTotal) * 100;
+
+      // Focus overlay
+      const timerEl = document.getElementById('focusTimer');
+      const barEl   = document.getElementById('focusBar');
+      if (timerEl) timerEl.textContent = str;
+      if (barEl)   barEl.style.width   = pct + '%';
+
+      // Sprint card
+      const cardTimer = document.getElementById('sprintCardTimer');
+      if (cardTimer) cardTimer.textContent = str;
+
+      // Score preview
+      const scoreEl = document.getElementById('focusScore');
+      if (scoreEl) {
+        const base = { easy:100, medium:200, hard:350 }[this.currentSprintTask?.difficulty] || 200;
+        scoreEl.textContent = Math.round(base * pct / 100);
+      }
 
       if (this.sprintSeconds <= 0) {
         clearInterval(this.sprintTimer);
-        clearInterval(this.elapsedTimer);
-        this.completeSprint();
+        this._completeSprint();
       }
     }, 1000);
   }
 
-  async completeSprint() {
+  async _completeSprint() {
     try {
-      const task = await db.getRecord('tasks', this.currentSprintTask.id);
-      if (!task) throw new Error('Task not found');
-
+      const task       = await db.getRecord('tasks', this.currentSprintTask.id);
       task.status      = 'completed';
       task.completedAt = new Date().toISOString();
       await db.updateRecord('tasks', task);
 
-      const score = utils.calculateScore(task.difficulty, 0, true);
-
       const sprint = {
         id:         utils.generateId(),
-        userId:     this.uid,
+        userId:     this.user.id || this.user.userId,
         taskId:     task.id,
         taskName:   task.title,
         category:   task.category,
         difficulty: task.difficulty,
         status:     'completed',
-        score,
+        score:      utils.calculateScore(task.difficulty, 0, true),
         createdAt:  new Date().toISOString(),
-        duration:   this.sprintTotalSecs - this.sprintSeconds,
+        duration:   this.sprintTotal,
       };
       await db.addRecord('sprints', sprint);
 
-      // Update stats — use this.uid, not this.user.id
-      let stats = await db.getRecord('stats', this.uid);
-      if (!stats) {
-        stats = { userId: this.uid, totalSprints: 0, totalScore: 0, streak: 0 };
+      const stats = await db.getRecord('stats', this.user.id || this.user.userId).catch(() => null);
+      if (stats) {
+        stats.totalSprints = (stats.totalSprints || 0) + 1;
+        stats.totalScore   = (stats.totalScore   || 0) + sprint.score;
+        await db.updateRecord('stats', stats);
       }
-      stats.totalSprints = (stats.totalSprints || 0) + 1;
-      stats.totalScore   = (stats.totalScore   || 0) + score;
-      stats.lastSprintAt = new Date().toISOString();
-      await db.updateRecord('stats', stats);
 
-      utils.showNotification(`Sprint complete! +${score} pts 🎉`, 'success');
-      this.setFocusInactive();
+      this._hideFocusOverlay();
+      this._updateSprintCard(false);
       clearInterval(this.sprintTimer);
-      clearInterval(this.elapsedTimer);
       await this.loadTasks();
-    } catch (err) {
-      console.error('completeSprint:', err);
-      utils.showNotification('Error saving sprint', 'error');
+      utils.showNotification(`Sprint complete! +${sprint.score} pts 🎉`, 'success', 5000);
+
+      // Refresh sibling pages if open in same tab (single-page navigation)
+      if (window.analyticsPage) window.analyticsPage.refresh();
+      if (window.leaguePage)    window.leaguePage.refresh();
+      if (window.friendsPage)   window.friendsPage.refresh();
+    } catch (e) {
+      console.error('completeSprint:', e);
+      utils.showNotification('Error completing sprint', 'error');
     }
   }
 
   setupSprintControls() {
-    document.getElementById('focusCompleteBtn')?.addEventListener('click', () => {
-      clearInterval(this.sprintTimer);
-      clearInterval(this.elapsedTimer);
-      this.completeSprint();
-    });
+    document.getElementById('focusCompleteBtn')
+      ?.addEventListener('click', () => this._completeSprint());
 
-    document.getElementById('focusPauseBtn')?.addEventListener('click', () => {
-      this.isPaused = !this.isPaused;
-      const btn = document.getElementById('focusPauseBtn');
-      if (btn) btn.textContent = this.isPaused ? '▶ Resume' : '⏸ Pause';
-    });
+    document.getElementById('focusPauseBtn')
+      ?.addEventListener('click', () => utils.showNotification('Pause coming soon', 'info'));
 
-    document.getElementById('focusBailBtn')?.addEventListener('click', () => {
-      if (!confirm('Bail on this sprint? You\'ll lose 50 points.')) return;
-      clearInterval(this.sprintTimer);
-      clearInterval(this.elapsedTimer);
-      this.setFocusInactive();
-      utils.showNotification('Sprint abandoned. −50 pts 😬', 'warning');
-    });
+    document.getElementById('focusBailBtn')
+      ?.addEventListener('click', () => {
+        if (!confirm('Exit sprint? You will lose 50 points.')) return;
+        clearInterval(this.sprintTimer);
+        this._hideFocusOverlay();
+        this._updateSprintCard(false);
+        utils.showNotification('Sprint exited. −50 points.', 'warn');
+        this.loadTasks();
+      });
   }
 }
-
-/* ── Slide-in keyframe (injected once) ── */
-(function injectTaskAnim() {
-  if (document.getElementById('task-anim-style')) return;
-  const s = document.createElement('style');
-  s.id = 'task-anim-style';
-  s.textContent = `@keyframes taskSlideIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }`;
-  document.head.appendChild(s);
-})();
 
 let tasksPage;
 document.addEventListener('DOMContentLoaded', () => { tasksPage = new TasksPage(); });

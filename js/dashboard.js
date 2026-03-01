@@ -1,5 +1,5 @@
 /**
- * Dashboard Page Logic
+ * dashboard.js — Dashboard Page Logic
  */
 
 class Dashboard {
@@ -10,7 +10,6 @@ class Dashboard {
 
   async init() {
     if (!this.user) return;
-
     this.updateHeader();
     await this.loadTodaysTasks();
     await this.loadStats();
@@ -18,63 +17,68 @@ class Dashboard {
   }
 
   updateHeader() {
-    // Show username (from new auth) with fallback chain
-    const displayName = this.user.username || this.user.displayName || this.user.email || 'User';
+    const name = this.user.username || this.user.displayName || this.user.email || 'User';
+    const first = name.split(' ')[0];
 
-    const avatarEl   = document.getElementById('userAvatar');
-    const usernameEl = document.getElementById('username');
-    if (avatarEl)   avatarEl.textContent   = displayName.slice(0, 2).toUpperCase();
-    if (usernameEl) usernameEl.textContent  = displayName;
+    const avatarEl = document.getElementById('userAvatar');
+    const userEl   = document.getElementById('username');
+    if (avatarEl) avatarEl.textContent = name.slice(0, 2).toUpperCase();
+    if (userEl)   userEl.textContent   = name;
 
-    // Personalise the page welcome title
-    const titleEl = document.querySelector('.page-title');
-    if (titleEl) {
-      // Keep the <small> tag, update main text
-      const small = titleEl.querySelector('small');
-      titleEl.innerHTML = '';
-      if (small) titleEl.appendChild(small);
-      titleEl.appendChild(document.createTextNode('Hey, ' + displayName));
-    }
+    const titleEl = document.getElementById('pageTitle');
+    if (titleEl) titleEl.textContent = `Hey, ${first}`;
   }
 
   async loadTodaysTasks() {
     try {
-      const tasks     = await db.queryByIndex('tasks', 'userId', this.user.userId);
-      const today     = new Date().toDateString();
-      const todays    = tasks.filter(t => new Date(t.createdAt).toDateString() === today && t.status !== 'archived');
-      const completed = todays.filter(t => t.status === 'completed').length;
+      const uid      = this.user.userId || this.user.id;
+      const tasks    = await db.queryByIndex('tasks', 'userId', uid);
+      const today    = new Date().toDateString();
+      const todays   = tasks.filter(t =>
+        new Date(t.createdAt).toDateString() === today && t.status !== 'archived'
+      );
+      const done     = todays.filter(t => t.status === 'completed').length;
 
-      const todayCount    = document.getElementById('todayCount');
-      const todayProgress = document.getElementById('todayProgress');
-      if (todayCount)    todayCount.textContent    = todays.length;
-      if (todayProgress) todayProgress.textContent = `${completed} completed`;
+      // Stat card
+      const countEl = document.getElementById('todayCount');
+      const progEl  = document.getElementById('todayProgress');
+      if (countEl) countEl.textContent = todays.length;
+      if (progEl)  progEl.textContent  = `${done} of ${todays.length} completed`;
 
+      // EOD bar
+      if (window.updateEodProgress) window.updateEodProgress(done, todays.length);
+
+      // Task list
       const list = document.getElementById('todayTasksList');
-      if (list) {
-        list.innerHTML = todays.length === 0
-          ? '<div style="padding:20px;text-align:center;color:var(--muted)">No tasks today. <a href="tasks.html" style="color:var(--accent)">Add one →</a></div>'
-          : todays.map(t => this.renderTaskItem(t)).join('');
+      if (!list) return;
+
+      if (todays.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-icon">📋</span>
+            <span class="empty-text">No tasks today.</span>
+            <a href="tasks.html" class="empty-cta">Add one →</a>
+          </div>`;
+        return;
       }
-    } catch (err) { console.error('loadTodaysTasks:', err); }
+
+      const sorted = [...todays].sort((a, b) =>
+        a.status === b.status ? 0 : a.status === 'pending' ? -1 : 1
+      );
+      list.innerHTML = sorted.map((t, i) => this._taskItem(t, i)).join('');
+    } catch (e) { console.error('loadTodaysTasks:', e); }
   }
 
-  renderTaskItem(task) {
-    const colorMap = {
-      'deep-work': 'var(--accent)',
-      'admin':     'var(--muted)',
-      'creative':  'var(--accent3)',
-      'learning':  '#9b59b6',
-      'meeting':   'var(--accent2)'
-    };
-    const color = colorMap[task.category] || 'var(--accent3)';
-    const done  = task.status === 'completed';
+  _taskItem(task, idx) {
+    const done = task.status === 'completed';
     return `
-      <div class="task-item ${done ? 'completed' : ''}">
+      <div class="task-item ${done ? 'completed' : ''}"
+           style="animation-delay:${Math.min(idx * 40, 200)}ms">
         <div class="task-check ${done ? 'done' : ''}">${done ? '✓' : ''}</div>
         <div class="task-content">
-          <div class="task-title">${task.title}</div>
+          <div class="task-title">${this._esc(task.title)}</div>
           <div class="task-meta">
-            <span class="task-tag" style="border-color:${color};color:${color}">${task.category}</span>
+            <span class="task-tag tag-${task.category}">${task.category.replace('-',' ')}</span>
             <span class="task-difficulty ${task.difficulty}">${task.difficulty}</span>
           </div>
         </div>
@@ -83,42 +87,80 @@ class Dashboard {
 
   async loadStats() {
     try {
-      const stats = await db.getRecord('stats', this.user.userId);
-      if (!stats) return;
-      const el = id => document.getElementById(id);
-      if (el('sprintScore'))  el('sprintScore').textContent  = stats.totalScore   || 0;
-      if (el('streakCount'))  el('streakCount').textContent  = stats.streak       || 0;
-      if (el('totalSprints')) el('totalSprints').textContent = stats.totalSprints || 0;
-      if (el('avgScore'))     el('avgScore').textContent     =
-        stats.totalSprints > 0 ? Math.floor(stats.totalScore / stats.totalSprints) + ' avg' : '0 avg';
-    } catch (err) { console.error('loadStats:', err); }
+      const uid    = this.user.userId || this.user.id;
+      const stats  = await db.getRecord('stats', uid).catch(() => null);
+      const all    = await db.queryByIndex('sprints', 'userId', uid).catch(() => []);
+      const week   = Date.now() - 7 * 86_400_000;
+      const recent = all.filter(s => new Date(s.createdAt) > week);
+      const wScore = recent.reduce((s, sp) => s + (sp.score || 0), 0);
+      const avg    = all.length
+        ? Math.round(all.reduce((s, sp) => s + (sp.score || 0), 0) / all.length)
+        : 0;
+
+      this._countUp('sprintScore',  wScore);
+      this._countUp('streakCount',  stats?.streak || 0);
+      this._countUp('totalSprints', all.length);
+
+      const metaEl = document.getElementById('sprintMeta');
+      const avgEl  = document.getElementById('avgScore');
+      if (metaEl) metaEl.textContent = 'Last 7 days';
+      if (avgEl)  avgEl.textContent  = `${avg} avg score`;
+    } catch (e) { console.error('loadStats:', e); }
+  }
+
+  _countUp(id, target) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const dur   = 700;
+    const start = performance.now();
+    const tick  = now => {
+      const t = Math.min((now - start) / dur, 1);
+      el.textContent = Math.round(t * t * (3 - 2 * t) * target);
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 
   async loadRecentSprints() {
     try {
-      const sprints = await db.queryByIndex('sprints', 'userId', this.user.userId);
-      const recent  = sprints.slice(-5).reverse();
-      const list    = document.getElementById('sprintList');
+      const uid = this.user.userId || this.user.id;
+      const all = await db.queryByIndex('sprints', 'userId', uid).catch(() => []);
+      const top = all.sort((a, b) =>
+        new Date(b.createdAt) - new Date(a.createdAt)
+      ).slice(0, 6);
+
+      const list = document.getElementById('sprintList');
       if (!list) return;
-      list.innerHTML = recent.length === 0
-        ? '<div style="padding:20px;text-align:center;color:var(--muted)">No sprints yet. <a href="tasks.html" style="color:var(--accent)">Start one →</a></div>'
-        : recent.map(s => this.renderSprintItem(s)).join('');
-    } catch (err) { console.error('loadRecentSprints:', err); }
+
+      if (top.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-icon">⚡</span>
+            <span class="empty-text">No sprints yet.</span>
+            <a href="tasks.html" class="empty-cta">Start one →</a>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = top.map((s, i) => `
+        <div class="sprint-item" style="animation-delay:${i * 45}ms">
+          <div class="sprint-content">
+            <div class="sprint-title">${this._esc(s.taskName || 'Sprint')}</div>
+            <div class="sprint-meta">
+              <span class="sprint-category">${(s.category || '').replace('-',' ')}</span>
+              <span>${s.difficulty || ''}</span>
+              <span>${utils.formatDate(s.createdAt)}</span>
+            </div>
+          </div>
+          <div class="sprint-score">+${s.score || 0}</div>
+        </div>`).join('');
+    } catch (e) { console.error('loadRecentSprints:', e); }
   }
 
-  renderSprintItem(sprint) {
-    const date = new Date(sprint.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    return `
-      <div class="sprint-item">
-        <div class="sprint-content">
-          <div class="sprint-name">${sprint.taskName || 'Sprint'}</div>
-          <div class="sprint-meta">
-            <span class="sprint-category">${sprint.category || 'task'}</span>
-            <span>${date}</span>
-          </div>
-        </div>
-        <div class="sprint-score">${sprint.score || 0}</div>
-      </div>`;
+  _esc(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 }
 

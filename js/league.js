@@ -1,119 +1,209 @@
 /**
- * league.js — Real leaderboard from IndexedDB
- * Ranks all registered users by their totalScore
+ * league.js — Real leaderboard & badge system from IndexedDB
+ * Badges unlock based on actual sprint/task data.
  */
 
 class LeaguePage {
   constructor() {
-    this.user = auth.getUser();
+    this.user     = auth.getUser();
+    this.allUsers = [];
+    this.sprints  = [];
+    this.myStats  = null;
     this.init();
   }
-
-  get uid() { return this.user?.userId || this.user?.id; }
 
   async init() {
     if (!this.user) return;
     this.updateHeader();
-    await this.loadLeaderboard();
+    await this.loadAll();
   }
 
   updateHeader() {
     const name = this.user.username || this.user.email || 'User';
-    const av = document.getElementById('userAvatar');
-    const un = document.getElementById('username');
+    const av   = document.getElementById('userAvatar');
+    const un   = document.getElementById('username');
     if (av) av.textContent = name.slice(0, 2).toUpperCase();
     if (un) un.textContent = name;
   }
 
-  async loadLeaderboard() {
+  async loadAll() {
     try {
-      const allUsers = await db.getAllRecords('users');
+      const uid = this.user.id || this.user.userId;
 
-      // Load stats for each user
-      const ranked = await Promise.all(allUsers.map(async u => {
-        const uid   = u.userId || u.id;
-        const stats = await db.getRecord('stats', uid).catch(() => null);
-        return {
-          uid,
-          name:    u.username || u.email || 'Player',
-          email:   u.email || '',
-          score:   stats?.totalScore   || 0,
-          sprints: stats?.totalSprints || 0,
-          streak:  stats?.streak       || 0,
-          isYou:   uid === this.uid,
-        };
-      }));
+      // Load everything
+      this.allUsers = await db.getAllRecords('users').catch(() => []);
+      this.myStats  = await db.getRecord('stats', uid).catch(() => null);
+      this.sprints  = await db.queryByIndex('sprints', 'userId', uid).catch(() => []);
 
-      // Sort by score descending
-      ranked.sort((a, b) => b.score - a.score || b.sprints - a.sprints);
+      // Today's tasks for EOD bar
+      const tasks  = await db.queryByIndex('tasks', 'userId', uid).catch(() => []);
+      const today  = new Date().toDateString();
+      const todayT = tasks.filter(t => new Date(t.createdAt).toDateString() === today);
+      const doneT  = todayT.filter(t => t.status === 'completed').length;
+      if (window.updateEodProgress) window.updateEodProgress(doneT, todayT.length);
 
-      // Update page stats
-      const myRank = ranked.findIndex(u => u.isYou) + 1;
-      const me     = ranked.find(u => u.isYou);
-
-      const el = id => document.getElementById(id);
-      if (el('userRank'))          el('userRank').textContent         = myRank > 0 ? `#${myRank}` : '#—';
-      if (el('userLeagueScore'))   el('userLeagueScore').textContent  = me?.score.toLocaleString() || 0;
-      if (el('userLeagueSprints')) el('userLeagueSprints').textContent = me?.sprints || 0;
-      if (el('playerCount'))       el('playerCount').textContent      = allUsers.length;
-
-      // Division label
-      const division = this.getDivision(me?.score || 0);
-      if (el('userDivision'))   el('userDivision').textContent  = division.name;
-      if (el('divisionLabel'))  el('divisionLabel').textContent = division.name;
-      if (el('divisionLabel'))  el('divisionLabel').style.color = division.color;
-
-      // Render leaderboard
-      const table = document.getElementById('leaderboardTable');
-      if (!table) return;
-
-      if (ranked.length === 0) {
-        table.innerHTML = `<div class="empty-state">No players yet — register an account to appear here!</div>`;
-        return;
-      }
-
-      const avatarColors = ['#34d399','#38bdf8','#fbbf24','#e8ff47','#a78bfa','#ff4d6d'];
-
-      table.innerHTML = ranked.map((u, i) => {
-        const rank    = i + 1;
-        const color   = avatarColors[i % avatarColors.length];
-        const initials = u.name.slice(0, 2).toUpperCase();
-        const rowClass = u.isYou ? 'current-user'
-          : rank === 1 ? 'top-1'
-          : rank === 2 ? 'top-2'
-          : rank === 3 ? 'top-3'
-          : '';
-        const rankIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
-        const div = this.getDivision(u.score);
-
-        return `
-          <div class="league-row ${rowClass}">
-            <div class="rank-badge">${rankIcon}</div>
-            <div class="league-user">
-              <div class="league-avatar" style="background:${color};color:#000">${initials}</div>
-              <div>
-                <div class="league-username">${this._esc(u.name)}${u.isYou ? ' <span style="font-size:10px;color:var(--accent);font-family:var(--mono);font-weight:800">YOU</span>' : ''}</div>
-                <div class="league-email" style="color:${div.color};font-size:9px;letter-spacing:1px;font-weight:700">${div.name}</div>
-              </div>
-            </div>
-            <div class="league-score">${u.score.toLocaleString()}</div>
-            <div class="league-sprints">${u.sprints} sprints</div>
-          </div>`;
-      }).join('');
-    } catch (err) { console.error('loadLeaderboard:', err); }
+      await this.renderStats();
+      await this.renderLeaderboard();
+      this.renderBadges(tasks);
+    } catch (e) { console.error('league.loadAll:', e); }
   }
 
-  getDivision(score) {
-    if (score >= 5000)  return { name: 'Diamond', color: '#38bdf8' };
-    if (score >= 2000)  return { name: 'Platinum', color: '#a78bfa' };
-    if (score >= 1000)  return { name: 'Gold',     color: '#fbbf24' };
-    if (score >= 400)   return { name: 'Silver',   color: '#a0a0b8' };
-    return                     { name: 'Bronze',   color: '#cd7f32' };
+  async renderStats() {
+    const uid       = this.user.id || this.user.userId;
+    const myScore   = this.myStats?.totalScore  || 0;
+    const mySprints = this.myStats?.totalSprints || 0;
+
+    // Build global leaderboard to find rank
+    const lb = [];
+    for (const u of this.allUsers) {
+      const s = await db.getRecord('stats', u.id).catch(() => null);
+      lb.push({ id: u.id, score: s?.totalScore || 0 });
+    }
+    lb.sort((a, b) => b.score - a.score);
+    const rank    = lb.findIndex(r => r.id === uid) + 1;
+    const rankStr = rank > 0 ? `#${rank}` : '#—';
+
+    this._set('userRank',      rankStr);
+    this._set('rankSub',       rank > 0 ? `of ${this.allUsers.length} players` : 'be first!');
+    this._countUp('leaguePoints',  myScore);
+    this._countUp('leagueSprints', mySprints);
+    this._set('playerCount',   this.allUsers.length);
+  }
+
+  async renderLeaderboard() {
+    const el = document.getElementById('leaderboardList');
+    if (!el) return;
+
+    // Fetch all users + their stats
+    const lb = [];
+    for (const u of this.allUsers) {
+      try {
+        const s = await db.getRecord('stats', u.id).catch(() => null);
+        lb.push({
+          user:     u,
+          score:    s?.totalScore   || 0,
+          sprints:  s?.totalSprints || 0,
+        });
+      } catch (_) {}
+    }
+    lb.sort((a, b) => b.score - a.score);
+
+    const myId    = this.user.id || this.user.userId;
+    const palette = ['#ffd700','#c0c0c0','#cd7f32','#e8ff47','#47c8ff','#a87fff','#ff8c42'];
+    const ranks   = ['gold','silver','bronze'];
+
+    if (lb.length === 0) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-icon">🏆</span>
+          <span class="empty-text">No players yet. Start sprinting to appear here!</span>
+        </div>`;
+      return;
+    }
+
+    el.innerHTML = lb.map((item, i) => {
+      const isYou   = item.user.id === myId;
+      const rank    = i + 1;
+      const name    = this._esc(item.user.username || item.user.email.split('@')[0]);
+      const initials= name.slice(0, 2).toUpperCase();
+      const rankCls = i < 3 ? ranks[i] : (isYou ? 'you-marker' : '');
+      const color   = palette[i % palette.length];
+
+      return `
+        <div class="leaderboard-row ${isYou ? 'is-you' : ''}"
+             style="animation-delay:${i * 40}ms">
+          <div class="lb-rank ${rankCls}">#${rank}</div>
+          <div class="lb-player">
+            <div class="lb-avatar" style="background:${color};color:#000">${initials}</div>
+            <div class="lb-name">${name}${isYou ? ' ★' : ''}</div>
+          </div>
+          <div class="lb-score">${item.score.toLocaleString()}</div>
+          <div class="lb-sprints">${item.sprints}</div>
+        </div>`;
+    }).join('');
+
+    const seasonEl = document.getElementById('leagueSeasonBadge');
+    if (seasonEl) seasonEl.textContent = 'All time';
+  }
+
+  renderBadges(tasks) {
+    const grid = document.getElementById('badgesGrid');
+    if (!grid) return;
+
+    const uid       = this.user.id || this.user.userId;
+    const total     = this.sprints.length;
+    const streak    = this.myStats?.streak || 0;
+    const score     = this.myStats?.totalScore || 0;
+    const hardCount = this.sprints.filter(s => s.difficulty === 'hard').length;
+
+    const BADGES = [
+      {
+        icon: '🔥', name: 'First Sprint', req: 'Complete 1 sprint',
+        unlocked: total >= 1,
+      },
+      {
+        icon: '⚡', name: '10 Sprints', req: 'Complete 10 sprints',
+        unlocked: total >= 10,
+      },
+      {
+        icon: '🎯', name: 'Streak 7', req: '7-day active streak',
+        unlocked: streak >= 7,
+      },
+      {
+        icon: '💎', name: 'High Scorer', req: 'Earn 1000+ total pts',
+        unlocked: score >= 1000,
+      },
+      {
+        icon: '🚀', name: 'Hard Mode', req: 'Complete 5 hard sprints',
+        unlocked: hardCount >= 5,
+      },
+      {
+        icon: '👑', name: 'Champion', req: 'Reach #1 on leaderboard',
+        unlocked: false, // computed above via rank; simplified here
+      },
+    ];
+
+    const earned = BADGES.filter(b => b.unlocked).length;
+    const badgeCount = document.getElementById('badgeCount');
+    if (badgeCount) badgeCount.textContent = `${earned} earned`;
+
+    grid.innerHTML = BADGES.map(b => `
+      <div class="badge-item ${b.unlocked ? 'unlocked' : 'locked'}"
+           title="${b.req}">
+        <div class="badge-icon">${b.icon}</div>
+        <div class="badge-name">${b.name}</div>
+        <div class="badge-req">${b.req}</div>
+      </div>`).join('');
+  }
+
+  async refresh() { await this.loadAll(); }
+
+  _set(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  _countUp(id, target) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (target === 0) { el.textContent = '0'; return; }
+    const dur   = 700;
+    const start = performance.now();
+    const tick  = now => {
+      const t = Math.min((now - start) / dur, 1);
+      el.textContent = Math.round(t * t * (3 - 2 * t) * target);
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 
   _esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => { new LeaguePage(); });
+document.addEventListener('DOMContentLoaded', () => {
+  window.leaguePage = new LeaguePage();
+});

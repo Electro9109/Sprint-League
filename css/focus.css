@@ -1,323 +1,126 @@
-/* ══════════════════════════════════════════════
-   FOCUS.CSS — Full-Screen Sprint Lock Overlay
-   ══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   FOCUS.CSS — Sprint Focus Overlay
+   ═══════════════════════════════════════════════════ */
 
-/* ── FOCUS OVERLAY ── */
 .focus-overlay {
   display: none;
   position: fixed;
   inset: 0;
-  background: #05050d;
-  z-index: 99999;
+  z-index: 1000;
+  background: rgba(9,9,11,0.97);
+  backdrop-filter: blur(20px);
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 32px;
-  text-align: center;
-  overflow: hidden;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  padding: 40px 20px;
+  gap: 20px;
+  padding: 40px;
 }
-
-.focus-overlay::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 20% 20%, rgba(232,255,71,0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(56,189,248,0.04) 0%, transparent 50%);
-  pointer-events: none;
-  animation: focusAmbient 8s ease-in-out infinite alternate;
-}
-
-@keyframes focusAmbient {
-  0%   { opacity: 0.5; }
-  100% { opacity: 1; }
-}
-
-/* Animated grid */
-.focus-overlay::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(232,255,71,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(232,255,71,0.02) 1px, transparent 1px);
-  background-size: 48px 48px;
-  pointer-events: none;
-  animation: gridMove 20s linear infinite;
-}
-
-@keyframes gridMove {
-  0%   { background-position: 0 0, 0 0; }
-  100% { background-position: 48px 48px, 48px 48px; }
-}
-
-.focus-overlay.active {
-  display: flex;
-  opacity: 1;
-  animation: focusEnter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
+.focus-overlay.active { display: flex; }
 
 body.in-focus { overflow: hidden; }
 
-@keyframes focusEnter {
-  from { opacity: 0; transform: scale(0.97); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-/* ── LOCK BADGE ── */
 .focus-lock-badge {
-  position: absolute;
-  top: 28px;
-  right: 32px;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--accent2);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 1;
-}
-
-.lock-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent2);
-  animation: lockPulse 1.5s ease-in-out infinite;
-  box-shadow: 0 0 10px var(--accent2);
-}
-
-@keyframes lockPulse {
-  0%, 100% { box-shadow: 0 0 6px var(--accent2); transform: scale(1); }
-  50%       { box-shadow: 0 0 20px var(--accent2); transform: scale(1.2); }
-}
-
-/* ── FOCUS LABEL ── */
-.focus-label {
-  font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 4px;
-  color: var(--accent);
-  text-transform: uppercase;
-  font-weight: 700;
-  opacity: 0.7;
-  position: relative;
-  z-index: 1;
-  animation: blinkLabel 3s step-end infinite;
-}
-
-@keyframes blinkLabel {
-  0%, 65%, 100% { opacity: 0.7; }
-  66%, 99%      { opacity: 0.3; }
-}
-
-/* ── TASK NAME ── */
-.focus-task-name {
-  font-family: var(--display);
-  font-size: clamp(32px, 6vw, 64px);
-  font-weight: 900;
-  letter-spacing: -2px;
-  color: var(--text);
-  max-width: 80%;
-  line-height: 1.1;
-  word-break: break-word;
-  position: relative;
-  z-index: 1;
-  animation: fadeUp 0.5s ease;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ── TIMER ── */
-.focus-timer {
-  font-family: var(--mono);
-  font-size: clamp(72px, 14vw, 140px);
-  color: var(--accent);
-  letter-spacing: -4px;
-  line-height: 1;
-  font-weight: 700;
-  text-shadow: 0 0 40px rgba(232,255,71,0.4);
-  position: relative;
-  z-index: 1;
-  animation: timerGlow 2s ease-in-out infinite;
-}
-
-@keyframes timerGlow {
-  0%, 100% { text-shadow: 0 0 20px rgba(232,255,71,0.3); }
-  50%       { text-shadow: 0 0 60px rgba(232,255,71,0.6), 0 0 100px rgba(232,255,71,0.2); }
-}
-
-/* timer pulse when < 2 min */
-.focus-timer.warning {
-  color: var(--accent2);
-  animation: urgentPulse 0.5s ease-in-out infinite;
-}
-@keyframes urgentPulse {
-  0%, 100% { text-shadow: 0 0 20px rgba(255,77,109,0.3); }
-  50%       { text-shadow: 0 0 60px rgba(255,77,109,0.8); }
-}
-
-/* ── META ── */
-.focus-meta {
-  display: flex;
-  justify-content: center;
-  gap: 60px;
-  position: relative;
-  z-index: 1;
-}
-
-.focus-meta-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.focus-meta-label {
   font-family: var(--mono);
   font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--muted);
+  letter-spacing: 3px;
+  color: var(--red);
+  border: 1px solid rgba(255,77,77,0.4);
+  padding: 6px 14px;
+  border-radius: var(--r-xs);
   font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+.lock-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--red);
+  animation: pipPulse 1.5s ease-in-out infinite;
 }
 
-.focus-meta-value {
-  font-family: var(--display);
-  font-size: 28px;
-  color: var(--accent);
+.focus-label {
+  font-family: var(--mono);
+  font-size: 11px; letter-spacing: 3px;
+  color: var(--t-3); font-weight: 600;
+  text-transform: uppercase;
+}
+
+.focus-task-name {
+  font-family: var(--sans);
+  font-size: clamp(22px, 4vw, 36px);
   font-weight: 900;
+  color: var(--t-1);
   letter-spacing: -0.5px;
-  transition: color var(--transition);
+  text-align: center;
+  max-width: 600px;
 }
 
-/* ── PROGRESS ── */
+.focus-timer {
+  font-family: var(--mono);
+  font-size: clamp(60px, 12vw, 100px);
+  font-weight: 700;
+  color: var(--yellow);
+  letter-spacing: -4px;
+  line-height: 1;
+}
+
+.focus-meta {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+.focus-meta-item { text-align: center; }
+.focus-meta-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 2.5px;
+  color: var(--t-4); font-weight: 700; text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.focus-meta-value {
+  font-family: var(--mono); font-size: 24px; font-weight: 700;
+  color: var(--t-1); letter-spacing: -0.5px;
+}
+
 .focus-bar-wrap {
-  width: min(520px, 80vw);
+  width: min(400px, 80vw);
   height: 4px;
-  background: rgba(232,255,71,0.1);
+  background: var(--surf-3);
   border-radius: 2px;
   overflow: hidden;
-  position: relative;
-  z-index: 1;
 }
-
 .focus-bar {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), #b8e000);
+  background: var(--yellow);
   border-radius: 2px;
   transition: width 1s linear;
-  position: relative;
-}
-.focus-bar::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 12px var(--accent);
+  box-shadow: 0 0 12px rgba(232,255,71,0.5);
 }
 
-/* ── ACTIONS ── */
 .focus-actions {
   display: flex;
-  gap: 12px;
-  position: relative;
-  z-index: 1;
+  gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
+  margin-top: 8px;
 }
 
-.btn {
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  padding: 12px 28px;
-  border: none;
+/* Focus overlay buttons */
+.focus-actions .btn {
+  font-family: var(--mono);
+  font-size: 10px; letter-spacing: 2px;
+  font-weight: 700; text-transform: uppercase;
+  padding: 10px 20px;
+  border-radius: var(--r-sm);
   cursor: pointer;
-  transition: all var(--transition);
-  min-width: 140px;
-  border-radius: var(--radius);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  transition: all 0.18s;
+  border: 1px solid;
 }
-
-.btn.primary {
-  background: linear-gradient(135deg, var(--accent), #b8e000);
-  color: #000;
-  font-weight: 900;
+.focus-actions .btn.primary {
+  background: var(--yellow); color: #000; border-color: var(--yellow);
 }
-.btn.primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(232,255,71,0.5);
+.focus-actions .btn.primary:hover { background: var(--yellow-d); transform: translateY(-1px); }
+.focus-actions .btn.secondary {
+  background: transparent; color: var(--t-2); border-color: var(--b-2);
 }
-
-.btn.secondary {
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border2);
+.focus-actions .btn.secondary:hover { border-color: var(--t-2); color: var(--t-1); }
+.focus-actions .btn.danger {
+  background: transparent; color: var(--red); border-color: rgba(255,77,77,0.4);
 }
-.btn.secondary:hover {
-  border-color: var(--text2);
-  background: rgba(255,255,255,0.05);
-  transform: translateY(-2px);
-}
-
-.btn.danger {
-  background: transparent;
-  color: var(--accent2);
-  border: 1px solid rgba(255,77,109,0.3);
-}
-.btn.danger:hover {
-  background: rgba(255,77,109,0.1);
-  border-color: var(--accent2);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(255,77,109,0.25);
-}
-
-/* ── CELEBRATION BURST ── */
-.celebration-particle {
-  position: fixed;
-  pointer-events: none;
-  z-index: 100000;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  animation: burst 0.8s ease-out forwards;
-}
-@keyframes burst {
-  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
-  100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
-}
-
-/* ── RESPONSIVE ── */
-@media (max-width: 768px) {
-  .focus-overlay { gap: 20px; padding: 24px 16px; }
-  .focus-lock-badge { top: 16px; right: 16px; font-size: 10px; }
-  .focus-meta { gap: 36px; }
-  .focus-actions { gap: 10px; }
-  .btn { min-width: 120px; padding: 10px 20px; font-size: 12px; }
-}
-
-@media (max-width: 480px) {
-  .focus-actions { flex-direction: column; width: 100%; }
-  .btn { width: 100%; }
-  .focus-meta { gap: 24px; }
-}
+.focus-actions .btn.danger:hover { background: rgba(255,77,77,0.08); }
