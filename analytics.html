@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sprint League - Analytics</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Sprint League — Analytics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/analytics.css">
@@ -14,13 +15,13 @@
   <div id="app">
     <header class="header">
       <div class="header-left">
-        <div class="logo">Sprint<span>League</span></div>
+        <a href="index.html" class="logo" style="text-decoration:none">Sprint<span>League</span></a>
         <nav class="nav">
-          <a href="index.html" class="nav-btn">Dashboard</a>
-          <a href="tasks.html" class="nav-btn">Tasks</a>
+          <a href="index.html"     class="nav-btn">Dashboard</a>
+          <a href="tasks.html"     class="nav-btn">Tasks</a>
           <a href="analytics.html" class="nav-btn active">Analytics</a>
-          <a href="friends.html" class="nav-btn">Friends</a>
-          <a href="league.html" class="nav-btn">League</a>
+          <a href="friends.html"   class="nav-btn">Friends</a>
+          <a href="league.html"    class="nav-btn">League</a>
         </nav>
       </div>
       <div class="header-right">
@@ -42,11 +43,10 @@
         </h1>
         <div class="clock-block">
           <div class="live-clock" id="liveTime">00:00</div>
-          <div class="live-date" id="liveDate">Loading...</div>
+          <div class="live-date"  id="liveDate">Loading...</div>
         </div>
       </div>
 
-      <!-- Stats Overview (JS-populated) -->
       <div class="stats-row">
         <div class="stat-card">
           <div class="stat-label">Total Sprints</div>
@@ -70,20 +70,22 @@
         </div>
       </div>
 
-      <!-- Recent Sprints (JS-populated) -->
-      <div class="panel" style="margin-bottom:24px">
-        <div class="panel-title">Recent Sprints</div>
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-title">
+          <div class="panel-title-left"><span class="panel-dot"></span>Recent Sprints</div>
+        </div>
         <div id="recentSprintsList" class="sprint-list">
-          <div style="padding: 20px; text-align: center; color: var(--muted);">No sprints yet</div>
+          <div class="empty-state">No sprints yet. Complete some sprints to see analytics!</div>
         </div>
       </div>
 
-      <!-- Activity Heatmap + WPM Trend -->
-      <div class="grid-2" style="margin-bottom:24px">
+      <div class="grid-2" style="margin-bottom:20px">
         <div class="panel">
-          <div class="panel-title">Activity Heatmap — Last Year</div>
+          <div class="panel-title">
+            <div class="panel-title-left"><span class="panel-dot" style="background:var(--success);box-shadow:0 0 8px var(--success)"></span>Activity — Last 52 Weeks</div>
+          </div>
           <div class="heatmap">
-            <div class="heatmap-grid" id="heatmap-static"></div>
+            <div class="heatmap-grid" id="heatmapGrid"></div>
           </div>
           <div class="heatmap-legend">
             Less
@@ -97,72 +99,56 @@
         </div>
 
         <div class="panel">
-          <div class="panel-title">WPM Trend — Last 14 Sessions</div>
-          <div class="wpm-chart">
-            <div class="wpm-bar" style="height:51%" title="48 WPM"></div>
-            <div class="wpm-bar" style="height:59%" title="55 WPM"></div>
-            <div class="wpm-bar" style="height:66%" title="62 WPM"></div>
-            <div class="wpm-bar" style="height:62%" title="58 WPM"></div>
-            <div class="wpm-bar" style="height:76%" title="71 WPM"></div>
-            <div class="wpm-bar" style="height:79%" title="74 WPM"></div>
-            <div class="wpm-bar" style="height:72%" title="68 WPM"></div>
-            <div class="wpm-bar" style="height:85%" title="80 WPM"></div>
-            <div class="wpm-bar" style="height:82%" title="77 WPM"></div>
-            <div class="wpm-bar" style="height:87%" title="82 WPM"></div>
-            <div class="wpm-bar" style="height:76%" title="71 WPM"></div>
-            <div class="wpm-bar" style="height:94%" title="88 WPM"></div>
-            <div class="wpm-bar" style="height:96%" title="90 WPM"></div>
-            <div class="wpm-bar active" style="height:100%" title="94 WPM"></div>
+          <div class="panel-title">
+            <div class="panel-title-left"><span class="panel-dot" style="background:var(--accent3);box-shadow:0 0 8px var(--accent3)"></span>Score by Category</div>
           </div>
-          <div class="wpm-chart-meta">avg: 71 wpm · peak: 94 wpm · lowest: 48 wpm</div>
+          <div class="score-chart" id="categoryChart">
+            <div class="empty-state" style="padding:24px">Complete sprints to see category breakdown</div>
+          </div>
         </div>
       </div>
 
-      <!-- Daily Focus + Peak Hours -->
-      <div class="grid-2" style="margin-bottom:24px">
+      <div class="grid-2">
         <div class="panel">
-          <div class="panel-title">Focus Score — This Week</div>
+          <div class="panel-title">
+            <div class="panel-title-left"><span class="panel-dot" style="background:var(--accent4);box-shadow:0 0 8px var(--accent4)"></span>Daily Focus</div>
+          </div>
           <div class="daily-chart">
             <div class="day-bar-wrap">
-              <div class="day-bar" style="height:82%;background:var(--accent)"></div>
+              <div class="day-bar" style="height:62%;background:var(--accent3)"></div>
               <div class="day-label">MON</div>
-              <div class="day-val">82%</div>
-            </div>
-            <div class="day-bar-wrap">
-              <div class="day-bar" style="height:95%;background:var(--accent)"></div>
-              <div class="day-label">TUE</div>
-              <div class="day-val">95%</div>
-            </div>
-            <div class="day-bar-wrap">
-              <div class="day-bar" style="height:60%;background:var(--accent3)"></div>
-              <div class="day-label">WED</div>
-              <div class="day-val">60%</div>
             </div>
             <div class="day-bar-wrap">
               <div class="day-bar" style="height:88%;background:var(--accent)"></div>
+              <div class="day-label">TUE</div>
+            </div>
+            <div class="day-bar-wrap">
+              <div class="day-bar" style="height:74%;background:var(--accent3)"></div>
+              <div class="day-label">WED</div>
+            </div>
+            <div class="day-bar-wrap">
+              <div class="day-bar" style="height:95%;background:var(--accent)"></div>
               <div class="day-label">THU</div>
-              <div class="day-val">88%</div>
             </div>
             <div class="day-bar-wrap">
               <div class="day-bar" style="height:74%;background:var(--accent3)"></div>
               <div class="day-label">FRI</div>
-              <div class="day-val">74%</div>
             </div>
             <div class="day-bar-wrap">
-              <div class="day-bar" style="height:40%;background:var(--border)"></div>
+              <div class="day-bar" style="height:40%;background:var(--border2)"></div>
               <div class="day-label">SAT</div>
-              <div class="day-val">40%</div>
             </div>
             <div class="day-bar-wrap">
-              <div class="day-bar" style="height:4%;background:var(--border)"></div>
+              <div class="day-bar" style="height:4%;background:var(--border2)"></div>
               <div class="day-label">SUN</div>
-              <div class="day-val">0%</div>
             </div>
           </div>
         </div>
 
         <div class="panel">
-          <div class="panel-title">Peak Productivity Hours</div>
+          <div class="panel-title">
+            <div class="panel-title-left"><span class="panel-dot" style="background:var(--warning);box-shadow:0 0 8px var(--warning)"></span>Peak Hours</div>
+          </div>
           <div class="hour-grid">
             <div class="hour-block heat-1"><span>6am</span></div>
             <div class="hour-block heat-2"><span>7am</span></div>
@@ -181,91 +167,31 @@
             <div class="hour-block heat-0"><span>8pm</span></div>
             <div class="hour-block heat-0"><span>9pm</span></div>
           </div>
-          <div class="hour-grid-note">Peak hours: 9–11am. Avoid scheduling admin at 12–1pm.</div>
-        </div>
-      </div>
-
-      <!-- Weekly Sprint Report -->
-      <div class="panel">
-        <div class="panel-title">Weekly Sprint Report — Week of Feb 17</div>
-        <div class="grid-3">
-          <div class="report-stat">
-            <div class="report-num accent">23</div>
-            <div class="report-label">Sprints completed</div>
-          </div>
-          <div class="report-stat">
-            <div class="report-num blue">18h 40m</div>
-            <div class="report-label">Total focus time</div>
-          </div>
-          <div class="report-stat">
-            <div class="report-num">74%</div>
-            <div class="report-label">Task completion rate</div>
-          </div>
-          <div class="report-stat">
-            <div class="report-num accent">71 WPM</div>
-            <div class="report-label">Avg words per minute</div>
-          </div>
-          <div class="report-stat">
-            <div class="report-num" style="color:var(--success)">3</div>
-            <div class="report-label">Flow state sessions</div>
-          </div>
-          <div class="report-stat">
-            <div class="report-num" style="color:var(--accent2)">2</div>
-            <div class="report-label">Early bail exits</div>
-          </div>
+          <div class="hour-grid-note">Based on sprint start times · Peak: 9–11am</div>
         </div>
       </div>
     </main>
   </div>
 
-  <!-- Auth Modal -->
-  <div id="authModal" class="modal active">
-    <div class="modal-content auth-card">
-      <h2 class="auth-logo">Sprint<span>League</span></h2>
-      <p class="auth-subtitle">Gamify your productivity</p>
-      <form id="loginForm" class="auth-form">
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" id="loginEmail" placeholder="your@email.com" required>
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="loginPassword" placeholder="••••••" required>
-        </div>
-        <button type="submit" class="btn-primary">Sign In</button>
-      </form>
-      <div class="auth-divider">or</div>
-      <form id="registerForm" class="auth-form" style="display: none;">
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" id="registerEmail" placeholder="your@email.com" required>
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="registerPassword" placeholder="••••••" required>
-        </div>
-        <button type="submit" class="btn-primary">Create Account</button>
-      </form>
-      <div style="text-align: center; margin-top: 24px;">
-        <button type="button" id="toggleAuth">Don't have an account? Sign up</button>
-      </div>
-    </div>
-  </div>
-
+  <div id="auth-root"></div>
   <script src="js/lib/db.js"></script>
   <script src="js/lib/auth.js"></script>
   <script src="js/lib/utils.js"></script>
   <script src="js/clock.js"></script>
   <script src="js/analytics.js"></script>
   <script src="js/app.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="js/auth-ui.js"></script>
   <script>
-    (function () {
-      const grid = document.getElementById('heatmap-static');
+    // Generate heatmap
+    (function() {
+      const grid = document.getElementById('heatmapGrid');
       if (!grid) return;
       const levels = [0,0,1,0,2,1,3,0,1,2,4,3,2,1,0,0,2,3,4,4,3,2,1,0,0,1,2,3,2,1,0,0,0,1,0,2,1,0,3,2,4,3,1,0,1,2,3,4,3,2,1,0];
       let html = '';
       for (let i = 0; i < 364; i++) {
-        html += `<div class="heat-cell heat-${levels[i % levels.length]}"></div>`;
+        html += `<div class="heat-cell heat-${levels[i % levels.length]}" title="Sprint activity"></div>`;
       }
       grid.innerHTML = html;
     })();

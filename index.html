@@ -3,24 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sprint League - Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Sprint League — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/sprint-widget.css">
   <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
+
+  <!-- Sprint mode active indicator -->
+  <div class="sprint-mode-indicator" id="sprint-indicator">
+    <span class="smi-dot"></span>
+    SPRINT
+    <span class="smi-time">25:00</span>
+  </div>
+
   <div id="app">
     <header class="header">
       <div class="header-left">
-        <div class="logo">Sprint<span>League</span></div>
+        <a href="index.html" class="logo" style="text-decoration:none">Sprint<span>League</span></a>
         <nav class="nav">
-          <a href="index.html" class="nav-btn active">Dashboard</a>
-          <a href="tasks.html" class="nav-btn">Tasks</a>
+          <a href="index.html"     class="nav-btn active">Dashboard</a>
+          <a href="tasks.html"     class="nav-btn">Tasks</a>
           <a href="analytics.html" class="nav-btn">Analytics</a>
-          <a href="friends.html" class="nav-btn">Friends</a>
-          <a href="league.html" class="nav-btn">League</a>
+          <a href="friends.html"   class="nav-btn">Friends</a>
+          <a href="league.html"    class="nav-btn">League</a>
         </nav>
       </div>
       <div class="header-right">
@@ -42,7 +52,7 @@
         </h1>
         <div class="clock-block">
           <div class="live-clock" id="liveTime">00:00</div>
-          <div class="live-date" id="liveDate">Loading...</div>
+          <div class="live-date"  id="liveDate">Loading...</div>
         </div>
       </div>
 
@@ -73,34 +83,46 @@
       <div class="grid-2">
         <!-- Today's Tasks -->
         <div class="panel">
-          <div class="panel-title">Today's Tasks</div>
+          <div class="panel-title">
+            <div class="panel-title-left">
+              <span class="panel-dot"></span>Today's Tasks
+            </div>
+            <a href="tasks.html" style="font-family:var(--mono);font-size:10px;color:var(--accent);text-decoration:none;letter-spacing:1px;font-weight:700;opacity:0.8;transition:opacity 0.2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">+ ADD →</a>
+          </div>
           <div id="todayTasksList" class="task-list">
-            <div style="padding: 20px; text-align: center; color: var(--muted);">No tasks yet. <a href="tasks.html">Create one</a></div>
+            <div class="empty-state">No tasks yet. <a href="tasks.html" style="color:var(--accent);text-decoration:none">Create one →</a></div>
           </div>
         </div>
 
         <!-- Recent Sprints -->
         <div class="panel">
-          <div class="panel-title">Recent Sprints</div>
+          <div class="panel-title">
+            <div class="panel-title-left">
+              <span class="panel-dot" style="background:var(--accent3);box-shadow:0 0 8px var(--accent3)"></span>
+              Recent Sprints
+            </div>
+          </div>
           <div id="sprintList" class="sprint-list">
-            <div style="padding: 20px; text-align: center; color: var(--muted);">No sprints yet</div>
+            <div class="empty-state">No sprints yet. Use the ⚡ widget →</div>
           </div>
         </div>
       </div>
     </main>
+  </div>
 
-  <!-- Scripts -->
+  <!-- Sprint Widget & Auth -->
+  <div id="sprint-widget-root"></div>
+  <div id="auth-root"></div>
+
   <script src="js/lib/db.js"></script>
   <script src="js/lib/auth.js"></script>
   <script src="js/lib/utils.js"></script>
   <script src="js/clock.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/app.js"></script>
-
-  <!-- React Auth UI -->
-  <div id="auth-root"></div>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="js/auth-ui.js"></script>
+  <script src="js/sprint-widget.js"></script>
 </body>
 </html>

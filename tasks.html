@@ -3,16 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sprint League - Tasks</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Sprint League — Tasks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/dashboard.css">
   <link rel="stylesheet" href="css/tasks.css">
   <link rel="stylesheet" href="css/focus.css">
+  <link rel="stylesheet" href="css/sprint-widget.css">
   <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
+
+  <!-- Sprint mode active indicator -->
+  <div class="sprint-mode-indicator" id="sprint-indicator">
+    <span class="smi-dot"></span>
+    SPRINT
+    <span class="smi-time">25:00</span>
+  </div>
 
   <!-- Focus Overlay (shown during sprint) -->
   <div class="focus-overlay" id="focusOverlay">
@@ -24,12 +33,16 @@
     <div class="focus-timer" id="focusTimer">25:00</div>
     <div class="focus-meta">
       <div class="focus-meta-item">
-        <div class="focus-meta-label">WPM</div>
-        <div class="focus-meta-value" id="focusWPM">0</div>
+        <div class="focus-meta-label">Elapsed</div>
+        <div class="focus-meta-value" id="focusWPM">00:00</div>
       </div>
       <div class="focus-meta-item">
         <div class="focus-meta-label">Score</div>
-        <div class="focus-meta-value" id="focusScore">0</div>
+        <div class="focus-meta-value" id="focusScore">+0</div>
+      </div>
+      <div class="focus-meta-item">
+        <div class="focus-meta-label">Progress</div>
+        <div class="focus-meta-value" id="focusPct">0%</div>
       </div>
     </div>
     <div class="focus-bar-wrap">
@@ -45,13 +58,13 @@
   <div id="app">
     <header class="header">
       <div class="header-left">
-        <div class="logo">Sprint<span>League</span></div>
+        <a href="index.html" class="logo" style="text-decoration:none">Sprint<span>League</span></a>
         <nav class="nav">
-          <a href="index.html" class="nav-btn">Dashboard</a>
-          <a href="tasks.html" class="nav-btn active">Tasks</a>
+          <a href="index.html"     class="nav-btn">Dashboard</a>
+          <a href="tasks.html"     class="nav-btn active">Tasks</a>
           <a href="analytics.html" class="nav-btn">Analytics</a>
-          <a href="friends.html" class="nav-btn">Friends</a>
-          <a href="league.html" class="nav-btn">League</a>
+          <a href="friends.html"   class="nav-btn">Friends</a>
+          <a href="league.html"    class="nav-btn">League</a>
         </nav>
       </div>
       <div class="header-right">
@@ -73,13 +86,17 @@
         </h1>
         <div class="clock-block">
           <div class="live-clock" id="liveTime">00:00</div>
-          <div class="live-date" id="liveDate">Loading...</div>
+          <div class="live-date"  id="liveDate">Loading...</div>
         </div>
       </div>
 
       <!-- Add Task Form -->
-      <div class="panel" style="margin-bottom:24px">
-        <div class="panel-title">Add New Task</div>
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-title">
+          <div class="panel-title-left">
+            <span class="panel-dot"></span>New Task
+          </div>
+        </div>
         <form id="taskForm" class="form-container">
           <div class="form-row">
             <div class="form-group" style="flex:2">
@@ -105,9 +122,11 @@
               </select>
             </div>
           </div>
-          <div class="form-group">
-            <label>Notes (optional)</label>
-            <input type="text" id="taskNotes" placeholder="Any extra context...">
+          <div class="form-row">
+            <div class="form-group" style="flex:1">
+              <label>Notes (optional)</label>
+              <input type="text" id="taskNotes" placeholder="Any extra context...">
+            </div>
           </div>
           <div class="form-actions">
             <button type="submit" class="btn primary">+ Add Task</button>
@@ -116,79 +135,59 @@
       </div>
 
       <!-- Sprint Intensity -->
-      <div class="panel" style="margin-bottom:24px">
-        <div class="panel-title">Sprint Intensity</div>
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-title">
+          <div class="panel-title-left">
+            <span class="panel-dot" style="background:var(--accent2);box-shadow:0 0 8px var(--accent2)"></span>
+            Sprint Intensity
+          </div>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);font-weight:600">For focus overlay mode</span>
+        </div>
         <div class="intensity-row">
           <div class="intensity-card active" data-intensity="soft">
-            <div class="intensity-name">SOFT</div>
+            <div class="intensity-name">Soft</div>
             <div class="intensity-desc">Warns on distraction, no hard block</div>
           </div>
           <div class="intensity-card" data-intensity="medium">
-            <div class="intensity-name">MEDIUM</div>
+            <div class="intensity-name">Medium</div>
             <div class="intensity-desc">Redirects blocked sites, exit costs pts</div>
           </div>
           <div class="intensity-card" data-intensity="hard">
-            <div class="intensity-name">HARD</div>
+            <div class="intensity-name">Hard</div>
             <div class="intensity-desc">Full lock. No exit until sprint ends.</div>
           </div>
         </div>
       </div>
 
-      <!-- Task Progress -->
+      <!-- Task List -->
       <div class="panel">
         <div class="panel-title">
-          <span>Today's Tasks</span>
+          <div class="panel-title-left">
+            <span class="panel-dot" style="background:var(--accent3);box-shadow:0 0 8px var(--accent3)"></span>
+            Today's Tasks
+          </div>
+          <span id="progressPercent" style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:800">0%</span>
         </div>
         <div class="progress-label">
           <span id="progressText">0 of 0 tasks completed</span>
-          <span id="progressPercent">0%</span>
         </div>
         <div class="progress-wrap">
           <div class="progress-fill" id="progressBar" style="width:0%"></div>
         </div>
-
-        <!-- Task list (JS-populated) -->
         <div id="tasksList" class="task-list">
-          <div style="padding: 20px; text-align: center; color: var(--muted);">No tasks yet. Add one above.</div>
+          <div class="empty-state">No tasks yet. Add one above to get started! 🚀</div>
         </div>
       </div>
     </main>
   </div>
 
-  <!-- Auth Modal -->
-  <div id="authModal" class="modal active">
-    <div class="modal-content auth-card">
-      <h2 class="auth-logo">Sprint<span>League</span></h2>
-      <p class="auth-subtitle">Gamify your productivity</p>
-      <form id="loginForm" class="auth-form">
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" id="loginEmail" placeholder="your@email.com" required>
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="loginPassword" placeholder="••••••" required>
-        </div>
-        <button type="submit" class="btn-primary">Sign In</button>
-      </form>
-      <div class="auth-divider">or</div>
-      <form id="registerForm" class="auth-form" style="display: none;">
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" id="registerEmail" placeholder="your@email.com" required>
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="registerPassword" placeholder="••••••" required>
-        </div>
-        <button type="submit" class="btn-primary">Create Account</button>
-      </form>
-      <div style="text-align: center; margin-top: 24px;">
-        <button type="button" id="toggleAuth">Don't have an account? Sign up</button>
-      </div>
-    </div>
-  </div>
+  <!-- Sprint Widget mount -->
+  <div id="sprint-widget-root"></div>
 
+  <!-- Auth modal mount (MUST come before React scripts) -->
+  <div id="auth-root"></div>
+
+  <!-- Core scripts first -->
   <script src="js/lib/db.js"></script>
   <script src="js/lib/auth.js"></script>
   <script src="js/lib/utils.js"></script>
@@ -196,14 +195,10 @@
   <script src="js/tasks.js"></script>
   <script src="js/app.js"></script>
 
-  <script>
-    // Intensity card selection
-    document.querySelectorAll('.intensity-card').forEach(card => {
-      card.addEventListener('click', () => {
-        document.querySelectorAll('.intensity-card').forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
-      });
-    });
-  </script>
+  <!-- React (loaded AFTER auth-root div exists) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="js/auth-ui.js"></script>
+  <script src="js/sprint-widget.js"></script>
 </body>
 </html>

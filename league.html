@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sprint League - League</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Sprint League — League</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/league.css">
@@ -14,13 +15,13 @@
   <div id="app">
     <header class="header">
       <div class="header-left">
-        <div class="logo">Sprint<span>League</span></div>
+        <a href="index.html" class="logo" style="text-decoration:none">Sprint<span>League</span></a>
         <nav class="nav">
-          <a href="index.html" class="nav-btn">Dashboard</a>
-          <a href="tasks.html" class="nav-btn">Tasks</a>
+          <a href="index.html"     class="nav-btn">Dashboard</a>
+          <a href="tasks.html"     class="nav-btn">Tasks</a>
           <a href="analytics.html" class="nav-btn">Analytics</a>
-          <a href="friends.html" class="nav-btn">Friends</a>
-          <a href="league.html" class="nav-btn active">League</a>
+          <a href="friends.html"   class="nav-btn">Friends</a>
+          <a href="league.html"    class="nav-btn active">League</a>
         </nav>
       </div>
       <div class="header-right">
@@ -42,146 +43,99 @@
         </h1>
         <div class="clock-block">
           <div class="live-clock" id="liveTime">00:00</div>
-          <div class="live-date" id="liveDate">Loading...</div>
+          <div class="live-date"  id="liveDate">Loading...</div>
         </div>
       </div>
 
-      <!-- Stats (JS-populated) -->
       <div class="stats-row">
         <div class="stat-card">
           <div class="stat-label">Your Rank</div>
-          <div class="stat-value accent" id="userRank">#3</div>
-          <div class="stat-sub">gold division</div>
+          <div class="stat-value accent" id="userRank">#—</div>
+          <div class="stat-sub" id="userDivision">loading...</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">League Points</div>
-          <div class="stat-value accent" id="leaguePoints">8,420</div>
-          <div class="stat-sub">+1,240 today</div>
+          <div class="stat-label">Your Score</div>
+          <div class="stat-value accent" id="userLeagueScore">0</div>
+          <div class="stat-sub">lifetime pts</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Win Rate</div>
-          <div class="stat-value blue" id="winRate">74%</div>
-          <div class="stat-sub">tasks completed</div>
+          <div class="stat-label">Sprints</div>
+          <div class="stat-value blue" id="userLeagueSprints">0</div>
+          <div class="stat-sub">completed</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Season Best</div>
-          <div class="stat-value">#2</div>
-          <div class="stat-sub">week 1</div>
+          <div class="stat-label">Players</div>
+          <div class="stat-value accent" id="playerCount">0</div>
+          <div class="stat-sub">registered</div>
         </div>
       </div>
 
       <div class="grid-2">
-        <!-- Leaderboard -->
-        <div>
-          <div class="panel">
-            <div class="panel-title">Leaderboard — Gold Division</div>
-
-            <!-- JS-populated (shown when logged in) -->
-            <div id="leaderboardTableEl" class="leaderboard" style="display:none"></div>
-
-            <!-- Static preview (shown before JS loads / as fallback) -->
-            <div id="staticLeaderboard">
-              <div class="league-row top1">
-                <div class="league-rank top">1</div>
-                <div class="league-avatar" style="background:#4dff91">DS</div>
-                <div class="league-name">Devika S</div>
-                <div class="league-score">11,200</div>
-                <div class="league-div div-gold">GOLD</div>
-              </div>
-              <div class="league-row top2">
-                <div class="league-rank top">2</div>
-                <div class="league-avatar" style="background:#47c8ff">SM</div>
-                <div class="league-name">Shubhankar M</div>
-                <div class="league-score">10,000</div>
-                <div class="league-div div-gold">GOLD</div>
-              </div>
-              <div class="league-row you-row">
-                <div class="league-rank top">3</div>
-                <div class="league-avatar" style="background:var(--accent);color:#000">YOU</div>
-                <div class="league-name" style="color:var(--accent)">You</div>
-                <div class="league-score">8,420</div>
-                <div class="league-div div-gold">GOLD</div>
-              </div>
-              <div class="league-row">
-                <div class="league-rank">4</div>
-                <div class="league-avatar" style="background:#ffd700">YS</div>
-                <div class="league-name">Yug S</div>
-                <div class="league-score">7,800</div>
-                <div class="league-div div-gold">GOLD</div>
-              </div>
-              <div class="league-row">
-                <div class="league-rank">5</div>
-                <div class="league-avatar" style="background:#ff4747">TK</div>
-                <div class="league-name">Tushar K</div>
-                <div class="league-score">6,400</div>
-                <div class="league-div div-silver">SILVER</div>
-              </div>
-              <div class="league-row">
-                <div class="league-rank">6</div>
-                <div class="league-avatar" style="background:#9b59b6">PS</div>
-                <div class="league-name">Priya S</div>
-                <div class="league-score">5,900</div>
-                <div class="league-div div-silver">SILVER</div>
-              </div>
-              <div class="league-row">
-                <div class="league-rank">7</div>
-                <div class="league-avatar" style="background:#cd7f32">TW</div>
-                <div class="league-name">Tom W</div>
-                <div class="league-score">4,200</div>
-                <div class="league-div div-bronze">BRONZE</div>
-              </div>
-            </div>
+        <div class="panel">
+          <div class="panel-title">
+            <div class="panel-title-left"><span class="panel-dot" style="background:var(--warning);box-shadow:0 0 8px var(--warning)"></span>Leaderboard</div>
+          </div>
+          <div id="leaderboardTable" class="leaderboard">
+            <div class="empty-state">Loading leaderboard...</div>
           </div>
         </div>
 
-        <!-- Right -->
         <div>
-          <!-- Active Duel -->
-          <div class="panel" style="margin-bottom:24px">
-            <div class="panel-title">Active Duel</div>
-            <div class="duel-block">
-              <div class="duel-header">
-                <div class="duel-player">
-                  <div class="duel-avatar" style="background:var(--accent);color:#000">YOU</div>
-                  <div class="duel-player-name">You</div>
-                  <div class="duel-player-score" style="color:var(--accent)">640 pts</div>
-                </div>
-                <div class="duel-vs">VS</div>
-                <div class="duel-player">
-                  <div class="duel-avatar" style="background:#47c8ff">SM</div>
-                  <div class="duel-player-name">Shubh</div>
-                  <div class="duel-player-score" style="color:var(--accent2)">720 pts</div>
-                </div>
+          <!-- Badges -->
+          <div class="panel" style="margin-bottom:20px">
+            <div class="panel-title">
+              <div class="panel-title-left"><span class="panel-dot" style="background:var(--accent3);box-shadow:0 0 8px var(--accent3)"></span>Badges</div>
+            </div>
+            <div class="badges-grid">
+              <div class="badge-item earned">
+                <div class="badge-icon">🔥</div>
+                <div class="badge-name">First Sprint</div>
               </div>
-              <div class="duel-task">Deep Work Sprint · 47% remaining</div>
-              <div class="duel-bar-wrap">
-                <div class="duel-bar-you" style="width:47%"></div>
-                <div class="duel-bar-them" style="width:53%"></div>
+              <div class="badge-item locked">
+                <div class="badge-icon">⚡</div>
+                <div class="badge-name">10 Sprints</div>
+              </div>
+              <div class="badge-item locked">
+                <div class="badge-icon">🎯</div>
+                <div class="badge-name">Streak 7</div>
+              </div>
+              <div class="badge-item locked">
+                <div class="badge-icon">👑</div>
+                <div class="badge-name">Top 3</div>
+              </div>
+              <div class="badge-item locked">
+                <div class="badge-icon">💎</div>
+                <div class="badge-name">1000 pts</div>
+              </div>
+              <div class="badge-item locked">
+                <div class="badge-icon">🚀</div>
+                <div class="badge-name">Hard Mode</div>
               </div>
             </div>
-            <button class="btn-primary" style="margin-top:16px;font-size:11px;width:100%">+ Challenge a Friend</button>
           </div>
 
-          <!-- Season Timeline -->
-          <div class="panel" style="margin-bottom:24px">
-            <div class="panel-title">Season 3 Timeline</div>
-            <div class="season-row done-week"><span class="season-check">✓</span>Week 1 — Finished #2 (+200 bonus pts)</div>
-            <div class="season-row active-week"><span class="season-check active">→</span>Week 2 — In progress (rank #3)</div>
-            <div class="season-row"><span class="season-check muted">○</span>Week 3 — Not started</div>
-            <div class="season-row"><span class="season-check muted">○</span>Week 4 — Not started</div>
-            <div class="season-note">Promotion to Platinum requires top 2 finish</div>
-          </div>
-
-          <!-- Badges -->
+          <!-- Season info -->
           <div class="panel">
-            <div class="panel-title">Earned Badges</div>
-            <div class="badge-grid">
-              <div class="badge earned" title="7-day streak">🔥<span>7-Day</span></div>
-              <div class="badge earned" title="1000-word sprint">📝<span>1K Words</span></div>
-              <div class="badge earned" title="No idle warrior">⚡<span>No Idle</span></div>
-              <div class="badge earned" title="Flow state">🌊<span>Flow</span></div>
-              <div class="badge" title="30-day streak">🏆<span>30-Day</span></div>
-              <div class="badge" title="Gold champion">👑<span>Champion</span></div>
+            <div class="panel-title">
+              <div class="panel-title-left"><span class="panel-dot" style="background:var(--accent4);box-shadow:0 0 8px var(--accent4)"></span>Season 1</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div class="score-row">
+                <span class="score-key">Season ends</span>
+                <span class="score-val">Apr 1, 2026</span>
+              </div>
+              <div class="score-row">
+                <span class="score-key">1st place prize</span>
+                <span class="score-val pos">+2,000 pts</span>
+              </div>
+              <div class="score-row">
+                <span class="score-key">Top 3 bonus</span>
+                <span class="score-val pos">+500 pts</span>
+              </div>
+              <div class="score-row">
+                <span class="score-key">Your division</span>
+                <span class="score-val" id="divisionLabel" style="color:var(--warning)">Bronze</span>
+              </div>
             </div>
           </div>
         </div>
@@ -189,45 +143,15 @@
     </main>
   </div>
 
-  <!-- Auth Modal -->
-  <div id="authModal" class="modal active">
-    <div class="modal-content auth-card">
-      <h2 class="auth-logo">Sprint<span>League</span></h2>
-      <p class="auth-subtitle">Gamify your productivity</p>
-      <form id="loginForm" class="auth-form">
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" id="loginEmail" placeholder="your@email.com" required>
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="loginPassword" placeholder="••••••" required>
-        </div>
-        <button type="submit" class="btn-primary">Sign In</button>
-      </form>
-      <div class="auth-divider">or</div>
-      <form id="registerForm" class="auth-form" style="display: none;">
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" id="registerEmail" placeholder="your@email.com" required>
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="registerPassword" placeholder="••••••" required>
-        </div>
-        <button type="submit" class="btn-primary">Create Account</button>
-      </form>
-      <div style="text-align: center; margin-top: 24px;">
-        <button type="button" id="toggleAuth">Don't have an account? Sign up</button>
-      </div>
-    </div>
-  </div>
-
+  <div id="auth-root"></div>
   <script src="js/lib/db.js"></script>
   <script src="js/lib/auth.js"></script>
   <script src="js/lib/utils.js"></script>
   <script src="js/clock.js"></script>
   <script src="js/league.js"></script>
   <script src="js/app.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="js/auth-ui.js"></script>
 </body>
 </html>

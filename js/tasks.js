@@ -1,130 +1,181 @@
 /**
- * Tasks Page Logic
+ * tasks.js — Task CRUD + Sprint Focus Overlay
+ * Fixed: userId field, renderTask CSS classes, elapsed timer, progress bar
  */
 
 class TasksPage {
   constructor() {
-    this.user = auth.getUser();
+    this.user        = auth.getUser();
     this.currentSprintTask = null;
-    this.sprintTimer = null;
-    this.sprintSeconds = 0;
+    this.sprintTimer       = null;
+    this.sprintSeconds     = 0;
+    this.sprintTotalSecs   = 25 * 60;
+    this.elapsedTimer      = null;
+    this.elapsedSeconds    = 0;
+    this.isPaused          = false;
     this.init();
+  }
+
+  get uid() {
+    // auth stores user as { userId, username, email, ... }
+    return this.user?.userId || this.user?.id;
   }
 
   async init() {
     if (!this.user) return;
-
     this.updateHeader();
     this.setupTaskForm();
+    this.setupIntensityCards();
     this.setupSprintControls();
     await this.loadTasks();
   }
 
   updateHeader() {
-    const userAvatar = document.getElementById('userAvatar');
-    const username = document.getElementById('username');
-    
-    if (userAvatar) userAvatar.textContent = this.user.avatar || 'U';
-    if (username) username.textContent = this.user.displayName || 'User';
+    const av = document.getElementById('userAvatar');
+    const un = document.getElementById('username');
+    const name = this.user.username || this.user.displayName || this.user.email || 'User';
+    if (av) av.textContent = name.slice(0, 2).toUpperCase();
+    if (un) un.textContent = name;
   }
 
   setupTaskForm() {
     const form = document.getElementById('taskForm');
     if (!form) return;
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const title = document.getElementById('taskTitle').value.trim();
+      if (!title) return;
 
       const task = {
-        id: utils.generateId(),
-        userId: this.user.id,
-        title: document.getElementById('taskTitle').value.trim(),
-        category: document.getElementById('taskCategory').value,
+        id:         utils.generateId(),
+        userId:     this.uid,
+        title,
+        category:   document.getElementById('taskCategory').value,
         difficulty: document.getElementById('taskDifficulty').value,
-        notes: document.getElementById('taskNotes').value,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        completedAt: null
+        notes:      document.getElementById('taskNotes')?.value?.trim() || '',
+        status:     'pending',
+        createdAt:  new Date().toISOString(),
+        completedAt: null,
       };
 
       try {
         await db.addRecord('tasks', task);
         form.reset();
         await this.loadTasks();
-        utils.showNotification('Task created!', 'success');
-      } catch (error) {
-        console.error('Failed to create task:', error);
+        utils.showNotification('Task added! ✓', 'success');
+
+        // Animate the new task item in
+        const list = document.getElementById('tasksList');
+        if (list && list.firstElementChild) {
+          list.firstElementChild.style.animation = 'taskSlideIn 0.3s ease';
+        }
+      } catch (err) {
+        console.error('Failed to create task:', err);
         utils.showNotification('Failed to create task', 'error');
       }
     });
   }
 
+  setupIntensityCards() {
+    document.querySelectorAll('.intensity-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.intensity-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+      });
+    });
+  }
+
   async loadTasks() {
     try {
-      const tasks = await db.queryByIndex('tasks', 'userId', this.user.id);
-      const activeTasks = tasks.filter(t => t.status !== 'archived');
+      const tasks      = await db.queryByIndex('tasks', 'userId', this.uid);
+      const active     = tasks.filter(t => t.status !== 'archived');
+      const completed  = active.filter(t => t.status === 'completed').length;
+      const total      = active.length;
+      const pct        = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-      // Update progress
-      const completed = activeTasks.filter(t => t.status === 'completed').length;
-      const total = activeTasks.length;
-      const percent = total > 0 ? (completed / total) * 100 : 0;
-
-      const progressText = document.getElementById('progressText');
+      const progressText    = document.getElementById('progressText');
       const progressPercent = document.getElementById('progressPercent');
+      const progressBar     = document.getElementById('progressBar');
 
-      if (progressText) progressText.textContent = `${completed} of ${total} tasks completed`;
-      if (progressPercent) progressPercent.textContent = Math.round(percent) + '%';
+      if (progressText)    progressText.textContent    = `${completed} of ${total} tasks completed`;
+      if (progressPercent) progressPercent.textContent = pct + '%';
+      if (progressBar)     progressBar.style.width     = pct + '%';
 
-      // Render tasks
       const list = document.getElementById('tasksList');
-      if (list) {
-        if (activeTasks.length === 0) {
-          list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted);">No tasks yet</div>';
-        } else {
-          list.innerHTML = activeTasks.map((task, idx) => this.renderTask(task, idx)).join('');
-          this.attachTaskListeners();
-        }
+      if (!list) return;
+
+      if (active.length === 0) {
+        list.innerHTML = `<div class="empty-state">No tasks yet. Add one above to get started! 🚀</div>`;
+        return;
       }
-    } catch (error) {
-      console.error('Failed to load tasks:', error);
+
+      // Sort: pending first, then completed
+      const sorted = [...active].sort((a, b) => {
+        if (a.status === b.status) return new Date(b.createdAt) - new Date(a.createdAt);
+        return a.status === 'pending' ? -1 : 1;
+      });
+
+      list.innerHTML = sorted.map(t => this.renderTask(t)).join('');
+    } catch (err) {
+      console.error('loadTasks:', err);
     }
   }
 
-  renderTask(task, idx) {
-    const isCompleted = task.status === 'completed';
+  renderTask(task) {
+    const done = task.status === 'completed';
+    const catColors = {
+      'deep-work': 'var(--accent)',
+      'creative':  'var(--accent3)',
+      'learning':  'var(--accent4)',
+      'meeting':   'var(--accent2)',
+      'admin':     'var(--text2)',
+    };
+    const color     = catColors[task.category] || 'var(--text2)';
+    const date      = task.completedAt
+      ? `<span style="color:var(--success);font-size:10px">✓ done</span>`
+      : `<span>${utils.formatDate(task.createdAt)}</span>`;
+
     return `
-      <div class="task-item ${isCompleted ? 'completed' : ''}" data-task-id="${task.id}">
-        <div class="task-check ${isCompleted ? 'done' : ''}" onclick="tasksPage.toggleTask('${task.id}')">
-          ${isCompleted ? '✓' : ''}
-        </div>
-        <div class="task-content">
-          <div class="task-title">${task.title}</div>
-          <div class="task-meta">
-            <span class="task-tag tag-${task.category}">${task.category}</span>
-            <span class="task-difficulty ${task.difficulty}">${task.difficulty}</span>
-          </div>
-        </div>
-        <div class="task-actions">
-          ${!isCompleted ? `<button class="btn btn-sprint" onclick="tasksPage.startSprint('${task.id}', '${task.title}')">Start Sprint</button>` : ''}
-          <button class="btn danger" onclick="tasksPage.deleteTask('${task.id}')">Delete</button>
+    <div class="task-row ${done ? 'completed' : ''}" data-id="${task.id}" style="animation: taskSlideIn 0.3s ease both">
+      <div class="task-row-check ${done ? 'done' : ''}" onclick="tasksPage.toggleTask('${task.id}')">
+        ${done ? '✓' : ''}
+      </div>
+      <div class="task-row-content">
+        <div class="task-row-title">${this._escape(task.title)}</div>
+        <div class="task-row-meta">
+          <span class="task-row-tag ${task.category}" style="border-color:${color};color:${color}">
+            ${task.category.replace('-',' ')}
+          </span>
+          <span class="task-row-diff ${task.difficulty}">${task.difficulty}</span>
+          ${task.notes ? `<span style="font-size:11px;color:var(--muted)">· ${this._escape(task.notes)}</span>` : ''}
+          ${date}
         </div>
       </div>
-    `;
+      <div class="task-row-actions">
+        ${!done ? `<button class="btn-sprint" onclick="tasksPage.startSprint('${task.id}', '${this._escape(task.title)}')">⚡ Sprint</button>` : ''}
+        <button class="btn-delete" onclick="tasksPage.deleteTask('${task.id}')">✕</button>
+      </div>
+    </div>`;
   }
 
-  attachTaskListeners() {
-    // Listeners attached via onclick attributes
+  _escape(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   async toggleTask(taskId) {
     try {
       const task = await db.getRecord('tasks', taskId);
-      task.status = task.status === 'completed' ? 'pending' : 'completed';
+      task.status      = task.status === 'completed' ? 'pending' : 'completed';
       task.completedAt = task.status === 'completed' ? new Date().toISOString() : null;
       await db.updateRecord('tasks', task);
       await this.loadTasks();
-    } catch (error) {
-      console.error('Failed to toggle task:', error);
+    } catch (err) {
+      console.error('toggleTask:', err);
     }
   }
 
@@ -133,38 +184,51 @@ class TasksPage {
     try {
       await db.deleteRecord('tasks', taskId);
       await this.loadTasks();
-    } catch (error) {
-      console.error('Failed to delete task:', error);
+    } catch (err) {
+      console.error('deleteTask:', err);
     }
   }
 
+  // ── SPRINT ──────────────────────────────────────────────────
+
   startSprint(taskId, taskTitle) {
-    this.currentSprintTask = { id: taskId, title: taskTitle };
-    this.sprintSeconds = 25 * 60; // 25 minute sprint
+    this.currentSprintTask  = { id: taskId, title: taskTitle };
+    this.sprintTotalSecs    = 25 * 60;
+    this.sprintSeconds      = this.sprintTotalSecs;
+    this.elapsedSeconds     = 0;
+    this.isPaused           = false;
     this.showFocusOverlay();
     this.runSprintTimer();
   }
 
   showFocusOverlay() {
     const overlay = document.getElementById('focusOverlay');
-    if (overlay) {
-      overlay.classList.add('active');
-      document.body.classList.add('in-focus');
-      document.getElementById('focusTaskName').textContent = this.currentSprintTask.title;
-      document.getElementById('focusTimer').textContent = '25:00';
-      document.getElementById('focusWPM').textContent = '0';
-      document.getElementById('focusScore').textContent = '0';
-      document.getElementById('focusBar').style.width = '0%';
-      
-      // Prevent key presses from exiting focus mode
-      document.addEventListener('keydown', this.focusKeyHandler.bind(this));
-    }
+    if (!overlay) return;
+    overlay.classList.add('active');
+    document.body.classList.add('in-focus');
+
+    // Populate
+    const nameEl  = document.getElementById('focusTaskName');
+    const timeEl  = document.getElementById('focusTimer');
+    const wpmEl   = document.getElementById('focusWPM');
+    const scoreEl = document.getElementById('focusScore');
+    const pctEl   = document.getElementById('focusPct');
+    const barEl   = document.getElementById('focusBar');
+
+    if (nameEl)  nameEl.textContent  = this.currentSprintTask.title;
+    if (timeEl)  timeEl.textContent  = '25:00';
+    if (wpmEl)   wpmEl.textContent   = '00:00';
+    if (scoreEl) scoreEl.textContent = '+0';
+    if (pctEl)   pctEl.textContent   = '0%';
+    if (barEl)   barEl.style.width   = '0%';
+
+    this._boundKeyHandler = this.focusKeyHandler.bind(this);
+    document.addEventListener('keydown', this._boundKeyHandler);
   }
 
-  focusKeyHandler(e) {
-    // Prevent common browser shortcuts that might exit
-    if (e.key === 'Escape' || (e.ctrlKey && e.key === 'w') || (e.metaKey && e.key === 'w')) {
-      e.preventDefault();
+  focusKeyHandler(ev) {
+    if (ev.key === 'Escape' || (ev.ctrlKey && ev.key === 'w') || (ev.metaKey && ev.key === 'w')) {
+      ev.preventDefault();
     }
   }
 
@@ -173,28 +237,52 @@ class TasksPage {
     if (overlay) {
       overlay.classList.remove('active');
       document.body.classList.remove('in-focus');
-      document.removeEventListener('keydown', this.focusKeyHandler.bind(this));
+    }
+    if (this._boundKeyHandler) {
+      document.removeEventListener('keydown', this._boundKeyHandler);
     }
   }
 
   runSprintTimer() {
     clearInterval(this.sprintTimer);
+    clearInterval(this.elapsedTimer);
+
+    // Elapsed counter
+    this.elapsedTimer = setInterval(() => {
+      if (this.isPaused) return;
+      this.elapsedSeconds++;
+      const wpmEl = document.getElementById('focusWPM');
+      if (wpmEl) wpmEl.textContent = utils.formatTime(this.elapsedSeconds);
+    }, 1000);
+
+    // Countdown
     this.sprintTimer = setInterval(() => {
+      if (this.isPaused) return;
       this.sprintSeconds--;
-      const minutes = Math.floor(this.sprintSeconds / 60);
-      const seconds = this.sprintSeconds % 60;
-      const timerEl = document.getElementById('focusTimer');
+
+      const timerEl  = document.getElementById('focusTimer');
+      const barEl    = document.getElementById('focusBar');
+      const pctEl    = document.getElementById('focusPct');
+      const scoreEl  = document.getElementById('focusScore');
+
       if (timerEl) {
-        timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        timerEl.textContent = utils.formatTime(this.sprintSeconds);
+        // Warning pulse when < 2min
+        if (this.sprintSeconds < 120) timerEl.classList.add('warning');
+        else timerEl.classList.remove('warning');
       }
 
-      const bar = document.getElementById('focusBar');
-      const totalSeconds = 25 * 60;
-      const percent = ((totalSeconds - this.sprintSeconds) / totalSeconds) * 100;
-      if (bar) bar.style.width = percent + '%';
+      const pct = ((this.sprintTotalSecs - this.sprintSeconds) / this.sprintTotalSecs) * 100;
+      if (barEl)   barEl.style.width   = pct.toFixed(1) + '%';
+      if (pctEl)   pctEl.textContent   = Math.round(pct) + '%';
+
+      // Live score preview
+      const partialScore = Math.round(utils.calculateScore('medium', 0, true) * (pct / 100));
+      if (scoreEl) scoreEl.textContent = '+' + partialScore;
 
       if (this.sprintSeconds <= 0) {
         clearInterval(this.sprintTimer);
+        clearInterval(this.elapsedTimer);
         this.completeSprint();
       }
     }, 1000);
@@ -202,83 +290,81 @@ class TasksPage {
 
   async completeSprint() {
     try {
-      // Update task status
       const task = await db.getRecord('tasks', this.currentSprintTask.id);
-      task.status = 'completed';
+      if (!task) throw new Error('Task not found');
+
+      task.status      = 'completed';
       task.completedAt = new Date().toISOString();
       await db.updateRecord('tasks', task);
 
-      // Create sprint record
+      const score = utils.calculateScore(task.difficulty, 0, true);
+
       const sprint = {
-        id: utils.generateId(),
-        userId: this.user.id,
-        taskId: task.id,
-        taskName: task.title,
-        category: task.category,
+        id:         utils.generateId(),
+        userId:     this.uid,
+        taskId:     task.id,
+        taskName:   task.title,
+        category:   task.category,
         difficulty: task.difficulty,
-        status: 'completed',
-        score: utils.calculateScore(task.difficulty, 0, true),
-        createdAt: new Date().toISOString(),
-        duration: 25 * 60
+        status:     'completed',
+        score,
+        createdAt:  new Date().toISOString(),
+        duration:   this.sprintTotalSecs - this.sprintSeconds,
       };
       await db.addRecord('sprints', sprint);
 
-      // Update stats
-      const stats = await db.getRecord('stats', this.user.id);
-      if (stats) {
-        stats.totalSprints += 1;
-        stats.totalScore += sprint.score;
-        await db.updateRecord('stats', stats);
+      // Update stats — use this.uid, not this.user.id
+      let stats = await db.getRecord('stats', this.uid);
+      if (!stats) {
+        stats = { userId: this.uid, totalSprints: 0, totalScore: 0, streak: 0 };
       }
+      stats.totalSprints = (stats.totalSprints || 0) + 1;
+      stats.totalScore   = (stats.totalScore   || 0) + score;
+      stats.lastSprintAt = new Date().toISOString();
+      await db.updateRecord('stats', stats);
 
-      utils.showNotification('Sprint completed! +' + sprint.score + ' points', 'success');
+      utils.showNotification(`Sprint complete! +${score} pts 🎉`, 'success');
       this.setFocusInactive();
       clearInterval(this.sprintTimer);
+      clearInterval(this.elapsedTimer);
       await this.loadTasks();
-    } catch (error) {
-      console.error('Failed to complete sprint:', error);
+    } catch (err) {
+      console.error('completeSprint:', err);
+      utils.showNotification('Error saving sprint', 'error');
     }
   }
 
   setupSprintControls() {
-    const completeBtn = document.getElementById('focusCompleteBtn');
-    const bailBtn = document.getElementById('focusBailBtn');
-    const pauseBtn = document.getElementById('focusPauseBtn');
+    document.getElementById('focusCompleteBtn')?.addEventListener('click', () => {
+      clearInterval(this.sprintTimer);
+      clearInterval(this.elapsedTimer);
+      this.completeSprint();
+    });
 
-    if (completeBtn) {
-      completeBtn.addEventListener('click', () => this.completeSprint());
-    }
+    document.getElementById('focusPauseBtn')?.addEventListener('click', () => {
+      this.isPaused = !this.isPaused;
+      const btn = document.getElementById('focusPauseBtn');
+      if (btn) btn.textContent = this.isPaused ? '▶ Resume' : '⏸ Pause';
+    });
 
-    if (pauseBtn) {
-      pauseBtn.addEventListener('click', () => {
-        // Pause sprint (not yet implemented)
-        utils.showNotification('Pause feature coming soon', 'info');
-      });
-    }
-
-    if (bailBtn) {
-      bailBtn.addEventListener('click', () => {
-        const confirmed = confirm('Exit sprint? You will lose 50 points and this task will remain incomplete.');
-        if (confirmed) {
-          clearInterval(this.sprintTimer);
-          
-          // Deduct points and maintain task as pending
-          try {
-            this.setFocusInactive();
-            utils.showNotification('Sprint exited. -50 points.', 'warning');
-            this.loadTasks();
-          } catch (error) {
-            console.error('Failed to exit sprint:', error);
-          }
-        }
-      });
-    }
+    document.getElementById('focusBailBtn')?.addEventListener('click', () => {
+      if (!confirm('Bail on this sprint? You\'ll lose 50 points.')) return;
+      clearInterval(this.sprintTimer);
+      clearInterval(this.elapsedTimer);
+      this.setFocusInactive();
+      utils.showNotification('Sprint abandoned. −50 pts 😬', 'warning');
+    });
   }
 }
 
-// Make globally accessible
-let tasksPage;
+/* ── Slide-in keyframe (injected once) ── */
+(function injectTaskAnim() {
+  if (document.getElementById('task-anim-style')) return;
+  const s = document.createElement('style');
+  s.id = 'task-anim-style';
+  s.textContent = `@keyframes taskSlideIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }`;
+  document.head.appendChild(s);
+})();
 
-document.addEventListener('DOMContentLoaded', () => {
-  tasksPage = new TasksPage();
-});
+let tasksPage;
+document.addEventListener('DOMContentLoaded', () => { tasksPage = new TasksPage(); });

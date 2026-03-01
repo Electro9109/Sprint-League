@@ -1,417 +1,148 @@
-/* ══════════════════════════════════════════════
-   LEAGUE.CSS — League Page Styles
-   ══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   league.css — Leaderboard / Rankings Page
+   ═══════════════════════════════════════════════ */
 
-/* ── DIVISION BADGE ── */
-.division-badge {
-  font-family: var(--display);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 2px;
-  margin-top: 6px;
-  text-transform: uppercase;
-}
-
-/* ── LEADERBOARD TABLE ── */
-.leaderboard {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  background: var(--border);
-}
+/* ── LEADERBOARD ─────────────────────────────── */
+.leaderboard { display: flex; flex-direction: column; gap: 3px; }
 
 .league-row {
-  display: grid;
-  grid-template-columns: 60px 1fr 100px 100px;
+  display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 16px 20px;
-  background: var(--surface);
-  transition: all 0.2s ease;
-}
-
-.league-row:hover {
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 10px;
   background: var(--surface2);
-  transform: translateX(4px);
+  border: 1px solid var(--border);
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
 }
-
+.league-row:hover {
+  border-color: var(--border2);
+  transform: translateX(3px);
+}
 .league-row.current-user {
-  background: rgba(232, 255, 71, 0.1);
-  border-left: 4px solid var(--accent);
-  padding-left: 16px;
+  background: linear-gradient(90deg, rgba(232,255,71,0.06), transparent);
+  border-color: rgba(232,255,71,0.3);
 }
-
 .league-row.top-1 {
-  background: rgba(77, 255, 145, 0.08);
-  border-left: 4px solid var(--success);
-  padding-left: 16px;
+  background: linear-gradient(90deg, rgba(255,215,0,0.06), transparent);
+  border-color: rgba(255,215,0,0.25);
 }
-
 .league-row.top-2 {
-  background: rgba(71, 200, 255, 0.08);
-  border-left: 4px solid var(--accent3);
-  padding-left: 16px;
+  background: linear-gradient(90deg, rgba(192,192,192,0.04), transparent);
+  border-color: rgba(192,192,192,0.15);
 }
-
 .league-row.top-3 {
-  background: rgba(255, 200, 71, 0.08);
-  border-left: 4px solid #ffc847;
-  padding-left: 16px;
+  background: linear-gradient(90deg, rgba(205,127,50,0.04), transparent);
+  border-color: rgba(205,127,50,0.15);
 }
 
-/* ── RANK BADGE ── */
+/* ── RANK BADGE ──────────────────────────────── */
 .rank-badge {
   font-family: var(--display);
+  font-size: 18px;
   font-weight: 900;
-  font-size: 22px;
-  color: var(--accent);
+  min-width: 36px;
   text-align: center;
-  letter-spacing: -1px;
-  min-width: 50px;
+  flex-shrink: 0;
+  color: var(--muted);
 }
+.top-1 .rank-badge, .top-2 .rank-badge, .top-3 .rank-badge { font-size: 22px; }
 
-.league-row.top-1 .rank-badge {
-  color: var(--success);
-  font-size: 24px;
-}
-
-.league-row.top-2 .rank-badge {
-  color: var(--accent3);
-}
-
-.league-row.top-3 .rank-badge {
-  color: #ffc847;
-}
-
-/* ── USER NAME ── */
+/* ── LEAGUE USER ─────────────────────────────── */
 .league-user {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.league-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--display);
-  font-weight: 900;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.league-row.top-1 .league-avatar {
-  background: var(--success);
-}
-
-.league-row.top-2 .league-avatar {
-  background: var(--accent3);
-}
-
-.league-row.top-3 .league-avatar {
-  background: #ffc847;
-  color: #000;
-}
-
-.league-username {
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--text);
-  letter-spacing: 0.5px;
-}
-
-.league-email {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
-  letter-spacing: 0.5px;
-}
-
-/* ── STATS ── */
-.league-score,
-.league-sprints {
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: -0.5px;
-  text-align: right;
-}
-
-.league-score {
-  color: var(--accent);
-}
-
-.league-sprints {
-  color: var(--accent3);
-}
-
-.league-row.top-1 .league-score {
-  color: var(--success);
-}
-
-.league-row.top-2 .league-score {
-  color: var(--accent3);
-}
-
-.league-row.top-3 .league-score {
-  color: #ffc847;
-}
-
-/* ── RESPONSIVE ── */
-@media (max-width: 768px) {
-  .league-row {
-    grid-template-columns: 50px 1fr 80px;
-    gap: 12px;
-  }
-
-  .league-sprints {
-    display: none;
-  }
-
-  .rank-badge {
-    font-size: 18px;
-  }
-
-  .league-username {
-    font-size: 14px;
-  }
-
-  .league-score {
-    font-size: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .league-row {
-    grid-template-columns: 40px 1fr 60px;
-    padding: 12px 12px;
-    gap: 8px;
-  }
-
-  .rank-badge {
-    font-size: 16px;
-    min-width: 35px;
-  }
-
-  .league-avatar {
-    width: 32px;
-    height: 32px;
-    font-size: 12px;
-  }
-
-  .league-username {
-    font-size: 13px;
-  }
-
-  .league-email {
-    display: none;
-  }
-
-  .league-score {
-    font-size: 14px;
-  }
-}
-
-.league-rank {
-  font-family: var(--mono);
-  font-size: 15px;
-  color: var(--text);
-  width: 20px;
-  text-align: right;
-  flex-shrink: 0;
-  font-weight: 700;
-}
-.league-rank.top { color: var(--accent); font-size: 17px; font-weight: 900; }
-
-.league-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--display);
-  font-weight: 900;
-  font-size: 14px;
-  color: #000;
-  flex-shrink: 0;
-}
-
-.league-name {
   flex: 1;
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  min-width: 0;
 }
-
-.league-score {
-  font-family: var(--mono);
-  font-size: 14px;
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.league-div {
-  font-family: var(--mono);
-  font-size: 13px;
-  padding: 5px 10px;
-  border: 1px solid;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  font-weight: 700;
-}
-.div-gold   { color: #ffd700; border-color: #ffd700; }
-.div-silver { color: #c0c0c0; border-color: #c0c0c0; }
-.div-bronze { color: #cd7f32; border-color: #cd7f32; }
-
-/* ── DUEL ── */
-.duel-block { padding: 4px 0 0; }
-
-.duel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.duel-player {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.duel-avatar {
-  width: 44px;
-  height: 44px;
+.league-avatar {
+  width: 36px; height: 36px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   font-family: var(--display);
   font-weight: 900;
-  font-size: 16px;
-  color: #000;
+  font-size: 13px;
+  flex-shrink: 0;
 }
-
-.duel-player-name {
-  font-family: var(--display);
-  font-weight: 700;
+.league-username {
+  font-family: var(--body);
   font-size: 14px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-.duel-player-score {
-  font-family: var(--mono);
-  font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
+.league-email { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.5px; }
 
-.duel-vs {
+/* ── LEAGUE STATS ────────────────────────────── */
+.league-score {
   font-family: var(--display);
   font-weight: 900;
   font-size: 20px;
-  letter-spacing: 2px;
-  color: var(--muted);
+  color: var(--accent);
+  min-width: 70px;
+  text-align: right;
+  flex-shrink: 0;
 }
-
-.duel-task {
-  font-family: var(--mono);
-  font-size: 14px;
-  color: var(--text);
-  letter-spacing: 1px;
-  text-align: center;
-  margin-bottom: 10px;
-  font-weight: 600;
-}
-
-.duel-bar-wrap {
-  height: 4px;
-  display: flex;
-  border-radius: 2px;
-  overflow: hidden;
-  background: var(--border);
-}
-.duel-bar-you  { background: var(--accent);  height: 100%; transition: width 0.5s; }
-.duel-bar-them { background: var(--accent2); height: 100%; transition: width 0.5s; }
-
-/* ── SEASON TIMELINE ── */
-.season-row {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
-  letter-spacing: 1px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.season-row:last-child { border-bottom: none; }
-.season-row.done-week   { color: var(--success); }
-.season-row.active-week { color: var(--accent); }
-
-.season-check        { font-size: 12px; flex-shrink: 0; }
-.season-check.active { color: var(--accent); }
-.season-check.muted  { color: var(--border); }
-
-.season-note {
+.league-sprints {
   font-family: var(--mono);
   font-size: 10px;
   color: var(--muted);
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  letter-spacing: 1px;
+  min-width: 70px;
+  text-align: right;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
 }
 
-/* ── BADGES ── */
-.badge-grid {
-  display: flex;
-  flex-wrap: wrap;
+/* ── BADGES ──────────────────────────────────── */
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin-top: 4px;
 }
-
-.badge {
+.badge-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  font-size: 24px;
-  width: 72px;
-  padding: 12px 8px;
-  border: 1px solid var(--border);
+  gap: 6px;
+  padding: 14px 8px;
+  border-radius: 10px;
   background: var(--surface2);
-  opacity: 0.3;
-  transition: all 0.2s;
-  cursor: default;
-}
-.badge.earned {
-  opacity: 1;
-  border-color: var(--accent);
-}
-.badge.earned:hover {
-  background: rgba(232,255,71,0.06);
-}
-
-.badge span {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--text);
-  letter-spacing: 1px;
+  border: 1px solid var(--border);
+  transition: all var(--transition);
   text-align: center;
+}
+.badge-item.earned {
+  border-color: rgba(232,255,71,0.3);
+  background: linear-gradient(135deg, rgba(232,255,71,0.06), transparent);
+}
+.badge-item.earned:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(232,255,71,0.15);
+}
+.badge-item.locked { opacity: 0.45; filter: grayscale(0.6); cursor: not-allowed; }
+.badge-icon { font-size: 28px; line-height: 1; }
+.badge-name {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
   text-transform: uppercase;
+  color: var(--muted);
   font-weight: 700;
 }
-.badge.earned span { color: var(--accent); font-weight: 800; }
+.badge-item.earned .badge-name { color: var(--accent); }
+
+/* ── SCORE ROWS ──────────────────────────────── */
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.score-row:last-child { border-bottom: none; }
+.score-key { font-family: var(--mono); font-size: 11px; color: var(--text2); letter-spacing: 0.5px; font-weight: 600; }
+.score-val { font-family: var(--display); font-size: 14px; font-weight: 800; color: var(--text); }
+.score-val.pos { color: var(--success); }

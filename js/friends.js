@@ -1,174 +1,181 @@
+/**
+ * friends.js — Squad page
+ * Reads all registered users from IndexedDB (shared local DB),
+ * shows their task/sprint progress, EOD report, and group challenge.
+ */
+
 class FriendsPage {
   constructor() {
-    this.user = null;
-    this.friends = [];
-    this.allUsers = [];
+    this.user = auth.getUser();
     this.init();
   }
 
+  get uid() { return this.user?.userId || this.user?.id; }
+
   async init() {
+    if (!this.user) return;
+    this.updateHeader();
+    await this.loadSquad();
+    await this.loadEODReport();
+    await this.loadChallenge();
+    this.startEodCountdown();
+  }
+
+  updateHeader() {
+    const name = this.user.username || this.user.email || 'User';
+    const av = document.getElementById('userAvatar');
+    const un = document.getElementById('username');
+    if (av) av.textContent = name.slice(0, 2).toUpperCase();
+    if (un) un.textContent = name;
+  }
+
+  async loadSquad() {
     try {
-      // Check authentication
-      if (!auth.isLoggedIn()) {
+      // Get all users from IndexedDB
+      const allUsers = await db.getAllRecords('users');
+      const list     = document.getElementById('squadList');
+      if (!list) return;
+
+      // Update stats
+      const sc = document.getElementById('squadCount');
+      if (sc) sc.textContent = allUsers.length;
+
+      if (allUsers.length === 0) {
+        list.innerHTML = `<div class="empty-state">No other users found. Invite friends to join!</div>`;
         return;
       }
 
-      this.user = auth.getUser();
-      await this.loadUsers();
-      await this.loadFriends();
-      this.renderSquadStats();
-      this.renderFriendsList();
-    } catch (error) {
-      console.error('Friends page init error:', error);
-      utils.showNotification('Error loading friends', 'error');
-    }
-  }
-
-  async loadUsers() {
-    try {
-      this.allUsers = await db.getAllRecords('users');
-    } catch (error) {
-      console.error('Error loading users:', error);
-      this.allUsers = [];
-    }
-  }
-
-  async loadFriends() {
-    try {
-      // Get all user records
-      const allUsers = await db.getAllRecords('users');
-      
-      // Filter out current user
-      this.friends = allUsers.filter(u => u.id !== this.user.id);
-    } catch (error) {
-      console.error('Error loading friends:', error);
-      this.friends = [];
-    }
-  }
-
-  async renderSquadStats() {
-    try {
-      // Squad count
-      const squadCountEl = document.getElementById('squadCount');
-      if (squadCountEl) {
-        squadCountEl.textContent = this.allUsers.length.toString();
-      }
-
-      // Calculate average score across all users
-      let totalScore = 0;
-      let sprintCount = 0;
-
-      for (const user of this.allUsers) {
-        try {
-          const userSprints = await db.queryByIndex('sprints', 'userId', user.id);
-          sprintCount += userSprints.length;
-          userSprints.forEach(sprint => {
-            totalScore += sprint.score || 0;
+      // Load stats for each user
+      const userStats = await Promise.all(
+        allUsers.map(async u => {
+          const uid   = u.userId || u.id;
+          const stats = await db.getRecord('stats', uid).catch(() => null);
+          const tasks = await db.queryByIndex('tasks', 'userId', uid).catch(() => []);
+          const todayTasks = tasks.filter(t => {
+            const d = new Date(t.createdAt).toDateString();
+            return d === new Date().toDateString();
           });
-        } catch (e) {
-          console.warn(`Could not load sprints for ${user.id}`);
-        }
-      }
+          const doneTasks  = todayTasks.filter(t => t.status === 'completed').length;
+          return { ...u, stats, todayTotal: todayTasks.length, todayDone: doneTasks };
+        })
+      );
 
-      const avgScore = sprintCount > 0 ? Math.round(totalScore / sprintCount) : 0;
-      const avgScoreEl = document.getElementById('avgSquadScore');
-      if (avgScoreEl) {
-        avgScoreEl.textContent = avgScore.toString();
-      }
+      // Update avg score stat
+      const scores     = userStats.map(u => u.stats?.totalScore || 0);
+      const avgScore   = scores.length > 0 ? Math.round(scores.reduce((a,b) => a+b, 0) / scores.length) : 0;
+      const topScore   = Math.max(...scores, 0);
+      const avg        = document.getElementById('avgSquadScore');
+      const top        = document.getElementById('topSprintScore');
+      if (avg) avg.textContent = avgScore;
+      if (top) top.textContent = topScore;
 
-      // Active count (stub - would track active session time)
-      const activeCountEl = document.getElementById('activeCount');
-      if (activeCountEl) {
-        activeCountEl.textContent = '0'; // Placeholder: could track active sprints
-      }
-    } catch (error) {
-      console.error('Error rendering squad stats:', error);
-    }
+      const avatarColors = ['#e8ff47','#47c8ff','#4dff91','#a78bfa','#ff4d6d','#fbbf24'];
+      const isCurrentUser = u => (u.userId || u.id) === this.uid;
+
+      list.innerHTML = userStats.map((u, i) => {
+        const name       = u.username || u.email || 'User';
+        const initials   = name.slice(0, 2).toUpperCase();
+        const score      = u.stats?.totalScore || 0;
+        const sprints    = u.stats?.totalSprints || 0;
+        const pct        = u.todayTotal > 0 ? Math.round((u.todayDone / u.todayTotal) * 100) : 0;
+        const color      = avatarColors[i % avatarColors.length];
+        const you        = isCurrentUser(u);
+        const statusText = you ? 'You' : sprints > 0 ? `${sprints} sprints` : 'No sprints yet';
+
+        return `
+          <div class="squad-card${you ? ' online' : ''}">
+            <div class="squad-avatar" style="background:${color}">
+              ${initials}
+              <div class="squad-online-dot ${you ? 'online-dot' : 'offline-dot'}"></div>
+            </div>
+            <div class="squad-info">
+              <div class="squad-name">${this._esc(name)}${you ? ' <span style="font-size:10px;color:var(--accent);font-weight:700">YOU</span>' : ''}</div>
+              <div class="squad-meta">
+                <span>${statusText}</span>
+                ${u.todayTotal > 0 ? `<span style="color:var(--text2)">${u.todayDone}/${u.todayTotal} tasks today</span>` : ''}
+              </div>
+            </div>
+            <div class="squad-score" style="${you ? 'text-shadow:0 0 12px rgba(232,255,71,0.4)' : ''}">
+              ${score.toLocaleString()}
+            </div>
+          </div>`;
+      }).join('');
+    } catch (err) { console.error('loadSquad:', err); }
   }
 
-  renderFriendsList() {
-    const friendsListEl = document.getElementById('friendsList');
-    if (!friendsListEl) return;
+  async loadEODReport() {
+    try {
+      const allUsers = await db.getAllRecords('users');
+      const today    = new Date().toDateString();
+      const report   = document.getElementById('eodReport');
+      if (!report) return;
 
-    if (this.friends.length === 0) {
-      friendsListEl.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted);">No other users in system yet</div>';
-      return;
-    }
+      const rows = await Promise.all(allUsers.map(async u => {
+        const uid   = u.userId || u.id;
+        const tasks = await db.queryByIndex('tasks', 'userId', uid).catch(() => []);
+        const todayTasks = tasks.filter(t => new Date(t.createdAt).toDateString() === today);
+        const done       = todayTasks.filter(t => t.status === 'completed').length;
+        const total      = todayTasks.length;
+        const name       = u.username || u.email.split('@')[0];
+        const isYou      = (u.userId || u.id) === this.uid;
+        const allDone    = total > 0 && done === total;
+        const cls        = isYou ? 'you' : allDone ? 'success' : 'fail';
+        const icon       = isYou ? '◎' : allDone ? '✓' : '✗';
+        const style      = isYou ? 'color:var(--accent)' : allDone ? 'color:var(--success)' : 'color:var(--accent2)';
+        return `<div style="font-family:var(--mono);font-size:13px;padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center">
+          <span style="${style};font-weight:800;min-width:14px">${icon}</span>
+          <span style="flex:1;color:var(--text)">${this._esc(name)}${isYou ? ' (you)' : ''}</span>
+          <span style="color:var(--text2);font-size:11px">${done}/${total} tasks</span>
+        </div>`;
+      }));
 
-    // Calculate scores for each friend
-    const friendsWithScores = this.friends.map(friend => ({
-      ...friend,
-      totalScore: 0,
-      sprintCount: 0
-    }));
-
-    // Load all friend data and scores
-    friendsListEl.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted);">Loading friends...</div>';
-
-    this.loadFriendScores().then(friendsData => {
-      friendsListEl.innerHTML = friendsData
-        .sort((a, b) => b.totalScore - a.totalScore)
-        .map(friend => this.renderFriendItem(friend))
-        .join('');
-    });
+      report.innerHTML = rows.join('') || `<div class="empty-state">No data yet</div>`;
+    } catch (err) { console.error('loadEODReport:', err); }
   }
 
-  async loadFriendScores() {
-    const friendsWithData = [];
+  async loadChallenge() {
+    try {
+      const allUsers = await db.getAllRecords('users');
+      const today    = new Date().toDateString();
+      let totalDone  = 0;
+      const goal     = 20;
 
-    for (const friend of this.friends) {
-      try {
-        const sprints = await db.queryByIndex('sprints', 'userId', friend.id);
-        const totalScore = sprints.reduce((sum, sprint) => sum + (sprint.score || 0), 0);
-        
-        friendsWithData.push({
-          ...friend,
-          totalScore,
-          sprintCount: sprints.length
-        });
-      } catch (e) {
-        friendsWithData.push({
-          ...friend,
-          totalScore: 0,
-          sprintCount: 0
-        });
-      }
-    }
+      await Promise.all(allUsers.map(async u => {
+        const uid   = u.userId || u.id;
+        const tasks = await db.queryByIndex('tasks', 'userId', uid).catch(() => []);
+        totalDone += tasks.filter(t =>
+          t.status === 'completed' &&
+          new Date(t.completedAt || t.createdAt).toDateString() === today
+        ).length;
+      }));
 
-    return friendsWithData;
+      const pct  = Math.min(Math.round((totalDone / goal) * 100), 100);
+      const bar  = document.getElementById('challengeBar');
+      const prog = document.getElementById('challengeProgress');
+      if (bar)  bar.style.width = pct + '%';
+      if (prog) prog.textContent = `${totalDone} / ${goal} tasks`;
+    } catch (err) { console.error('loadChallenge:', err); }
   }
 
-  renderFriendItem(friend) {
-    const initials = friend.email.substring(0, 2).toUpperCase();
-    const isCurrentUser = friend.id === this.user?.id;
-    
-    return `
-      <div class="friend-item panel" style="padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div class="avatar" style="width: 40px; height: 40px; font-size: 14px;">${initials}</div>
-          <div>
-            <div style="font-weight: 500; margin-bottom: 2px;">${friend.email.split('@')[0]}</div>
-            <div style="font-size: 12px; color: var(--muted);">${friend.sprintCount} sprints • ${friend.totalScore} points</div>
-          </div>
-        </div>
-        <button class="btn-small" onclick="friendsPage.addFriend('${friend.id}')" style="font-size: 12px;">
-          ${isCurrentUser ? 'You' : 'Follow'}
-        </button>
-      </div>
-    `;
+  startEodCountdown() {
+    const update = () => {
+      const now     = new Date();
+      const eod     = new Date();
+      eod.setHours(18, 0, 0, 0);
+      if (eod < now) eod.setDate(eod.getDate() + 1);
+      const diff = Math.round((eod - now) / 1000);
+      const h    = Math.floor(diff / 3600);
+      const m    = Math.floor((diff % 3600) / 60);
+      const el   = document.getElementById('eodTimeLeft');
+      if (el) el.textContent = `${h}h ${m}m`;
+    };
+    update();
+    setInterval(update, 60000);
   }
 
-  async addFriend(friendId) {
-    // Stub: Would add friend to user's friend list
-    utils.showNotification('Friend added!', 'success');
+  _esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 }
 
-// Initialize friends page when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    window.friendsPage = new FriendsPage();
-  });
-} else {
-  window.friendsPage = new FriendsPage();
-}
+document.addEventListener('DOMContentLoaded', () => { new FriendsPage(); });
