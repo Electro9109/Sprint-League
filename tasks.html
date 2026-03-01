@@ -1,232 +1,245 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sprint League — Tasks</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/tasks.css">
   <link rel="stylesheet" href="css/focus.css">
   <link rel="stylesheet" href="css/auth.css">
 </head>
+
 <body>
 
-<!-- Focus Overlay -->
-<div class="focus-overlay" id="focusOverlay">
-  <div class="focus-lock-badge"><span class="lock-dot"></span>FOCUS LOCK ACTIVE</div>
-  <div class="focus-label">// sprint in progress</div>
-  <div class="focus-task-name" id="focusTaskName">Task Name</div>
-  <div class="focus-timer"     id="focusTimer">25:00</div>
-  <div class="focus-meta">
-    <div class="focus-meta-item">
-      <div class="focus-meta-label">WPM</div>
-      <div class="focus-meta-value" id="focusWPM">0</div>
+  <!-- Focus Overlay -->
+  <div class="focus-overlay" id="focusOverlay">
+    <div class="focus-lock-badge"><span class="lock-dot"></span>FOCUS LOCK ACTIVE</div>
+    <div class="focus-label">// sprint in progress</div>
+    <div class="focus-task-name" id="focusTaskName">Task Name</div>
+    <div class="focus-timer" id="focusTimer">25:00</div>
+    <div class="focus-meta">
+      <div class="focus-meta-item">
+        <div class="focus-meta-label">WPM</div>
+        <div class="focus-meta-value" id="focusWPM">0</div>
+      </div>
+      <div class="focus-meta-item">
+        <div class="focus-meta-label">Score</div>
+        <div class="focus-meta-value" id="focusScore">0</div>
+      </div>
     </div>
-    <div class="focus-meta-item">
-      <div class="focus-meta-label">Score</div>
-      <div class="focus-meta-value" id="focusScore">0</div>
+    <div class="focus-bar-wrap">
+      <div class="focus-bar" id="focusBar" style="width:0%"></div>
+    </div>
+    <div class="focus-actions">
+      <button class="btn primary" id="focusCompleteBtn">✓ Complete Sprint</button>
+      <button class="btn secondary" id="focusPauseBtn">⏸ Pause</button>
+      <button class="btn danger" id="focusBailBtn">✗ Exit (−50 pts)</button>
     </div>
   </div>
-  <div class="focus-bar-wrap">
-    <div class="focus-bar" id="focusBar" style="width:0%"></div>
-  </div>
-  <div class="focus-actions">
-    <button class="btn primary"   id="focusCompleteBtn">✓ Complete Sprint</button>
-    <button class="btn secondary" id="focusPauseBtn">⏸ Pause</button>
-    <button class="btn danger"    id="focusBailBtn">✗ Exit (−50 pts)</button>
-  </div>
-</div>
 
-<div id="app">
+  <div id="app">
 
-  <!-- ══ HEADER ══ -->
-  <header class="header">
-    <div class="header-left">
-      <a href="index.html" class="logo">Sprint<span>League</span></a>
-      <nav class="nav">
-        <a href="index.html"     class="nav-btn">Dashboard</a>
-        <a href="tasks.html"     class="nav-btn active">Tasks</a>
-        <a href="analytics.html" class="nav-btn">Analytics</a>
-        <a href="friends.html"   class="nav-btn">Friends</a>
-        <a href="league.html"    class="nav-btn">League</a>
-      </nav>
-    </div>
-    <div class="header-right">
-      <div class="user-info">
-        <div class="avatar" id="userAvatar">U</div>
-        <div class="username" id="username">User</div>
+    <!-- ══ HEADER ══ -->
+    <header class="header">
+      <div class="header-left">
+        <a href="index.html" class="logo">Sprint<span>League</span></a>
+        <nav class="nav">
+          <a href="index.html" class="nav-btn">Dashboard</a>
+          <a href="tasks.html" class="nav-btn active">Tasks</a>
+          <a href="analytics.html" class="nav-btn">Analytics</a>
+          <a href="friends.html" class="nav-btn">Friends</a>
+          <a href="league.html" class="nav-btn">League</a>
+        </nav>
       </div>
-      <button class="logout-btn" id="logoutBtn">Logout</button>
-    </div>
-  </header>
-
-  <!-- ══ MAIN ══ -->
-  <main class="page">
-
-    <!-- EOD BANNER -->
-    <div class="eod-banner" id="eodBanner">
-      <div class="eod-banner-left">
-        <div class="eod-pip"></div>
-        <div class="eod-banner-info">
-          <span class="eod-banner-label">End of Day</span>
-          <span class="eod-banner-target" id="eodTarget">18:00</span>
+      <div class="header-right">
+        <div class="user-info">
+          <div class="avatar" id="userAvatar">U</div>
+          <div class="username" id="username">User</div>
         </div>
-        <div class="eod-banner-sep"></div>
-        <div class="eod-countdown">
-          <span class="eod-cd-val" id="eodH">—</span><span class="eod-cd-unit">h</span>
-          <span class="eod-cd-val" id="eodM">—</span><span class="eod-cd-unit">m</span>
-          <span class="eod-cd-rest">remaining</span>
-        </div>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
       </div>
-      <div class="eod-banner-right">
-        <span class="eod-task-stat" id="eodTaskLabel">0 / 0 done</span>
-        <div class="eod-track">
-          <div class="eod-fill" id="eodFill" style="width:0%"></div>
-        </div>
-      </div>
-    </div>
+    </header>
 
-    <!-- PAGE HEADER -->
-    <div class="page-header">
-      <div>
-        <p class="page-eyebrow">// task manager</p>
-        <h1 class="page-title">Tasks</h1>
-      </div>
-      <div class="clock-block">
-        <div class="live-clock" id="liveTime">00:00</div>
-        <div class="live-date"  id="liveDate">—</div>
-      </div>
-    </div>
+    <!-- ══ MAIN ══ -->
+    <main class="page">
 
-    <!-- SPRINT STATUS -->
-    <div class="sprint-card" id="sprintCard">
-      <div class="sprint-card-pulse" id="sprintPulse"></div>
-      <div class="sprint-card-icon">⚡</div>
-      <div class="sprint-card-body">
-        <div class="sprint-card-title" id="sprintCardTitle">No sprint active</div>
-        <div class="sprint-card-sub"   id="sprintCardSub">Select a task below and hit Start Sprint</div>
-      </div>
-      <div class="sprint-card-right" id="sprintCardRight">
-        <div class="sprint-card-timer" id="sprintCardTimer" style="display:none">25:00</div>
-        <button class="sprint-card-stop" id="sprintCardStop" style="display:none"
-                onclick="tasksPage && tasksPage.stopSprintFromWidget()">Stop Sprint</button>
-      </div>
-    </div>
-
-    <!-- TWO COLUMN LAYOUT -->
-    <div class="tasks-grid">
-
-      <!-- LEFT: Form + Intensity -->
-      <div class="tasks-left">
-        <div class="panel">
-          <div class="panel-header">
-            <span class="panel-title">New Task</span>
+      <!-- EOD BANNER -->
+      <div class="eod-banner" id="eodBanner">
+        <div class="eod-banner-left">
+          <div class="eod-pip"></div>
+          <div class="eod-banner-info">
+            <span class="eod-banner-label">End of Day</span>
+            <span class="eod-banner-target" id="eodTarget">18:00</span>
           </div>
-          <form id="taskForm">
-            <div class="field-group">
-              <label class="field-label">Task Title</label>
-              <input class="field-input" type="text" id="taskTitle"
-                     placeholder="What needs to get done?" required autocomplete="off">
+          <div class="eod-banner-sep"></div>
+          <div class="eod-countdown">
+            <span class="eod-cd-val" id="eodH">—</span><span class="eod-cd-unit">h</span>
+            <span class="eod-cd-val" id="eodM">—</span><span class="eod-cd-unit">m</span>
+            <span class="eod-cd-rest">remaining</span>
+          </div>
+        </div>
+        <div class="eod-banner-right">
+          <span class="eod-task-stat" id="eodTaskLabel">0 / 0 done</span>
+          <div class="eod-track">
+            <div class="eod-fill" id="eodFill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE HEADER -->
+      <div class="page-header">
+        <div>
+          <p class="page-eyebrow">// task manager</p>
+          <h1 class="page-title">Tasks</h1>
+        </div>
+        <div class="clock-block">
+          <div class="live-clock" id="liveTime">00:00</div>
+          <div class="live-date" id="liveDate">—</div>
+        </div>
+      </div>
+
+      <!-- SPRINT STATUS -->
+      <div class="sprint-card" id="sprintCard">
+        <div class="sprint-card-pulse" id="sprintPulse"></div>
+        <div class="sprint-card-icon">⚡</div>
+        <div class="sprint-card-body">
+          <div class="sprint-card-title" id="sprintCardTitle">No sprint active</div>
+          <div class="sprint-card-sub" id="sprintCardSub">Select a task below and hit Start Sprint</div>
+        </div>
+        <div class="sprint-card-right" id="sprintCardRight">
+          <div class="sprint-card-timer" id="sprintCardTimer" style="display:none">25:00</div>
+          <button class="sprint-card-stop" id="sprintCardStop" style="display:none"
+            onclick="tasksPage && tasksPage.stopSprintFromWidget()">Stop Sprint</button>
+        </div>
+      </div>
+
+      <!-- TWO COLUMN LAYOUT -->
+      <div class="tasks-grid">
+
+        <!-- LEFT: Form + Intensity -->
+        <div class="tasks-left">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">New Task</span>
             </div>
-            <div class="field-row">
+            <form id="taskForm">
               <div class="field-group">
-                <label class="field-label">Category</label>
-                <select class="field-input" id="taskCategory">
-                  <option value="deep-work">Deep Work</option>
-                  <option value="admin">Admin</option>
-                  <option value="creative">Creative</option>
-                  <option value="learning">Learning</option>
-                  <option value="meeting">Meeting</option>
-                </select>
+                <label class="field-label">Task Title</label>
+                <input class="field-input" type="text" id="taskTitle" placeholder="What needs to get done?" required
+                  autocomplete="off">
+              </div>
+              <div class="field-row">
+                <div class="field-group">
+                  <label class="field-label">Category</label>
+                  <select class="field-input" id="taskCategory">
+                    <option value="deep-work">Deep Work</option>
+                    <option value="admin">Admin</option>
+                    <option value="creative">Creative</option>
+                    <option value="learning">Learning</option>
+                    <option value="meeting">Meeting</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">Difficulty</label>
+                  <select class="field-input" id="taskDifficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                </div>
               </div>
               <div class="field-group">
-                <label class="field-label">Difficulty</label>
-                <select class="field-input" id="taskDifficulty">
-                  <option value="easy">Easy</option>
-                  <option value="medium" selected>Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
+                <label class="field-label">Notes <span style="opacity:.45;font-weight:400">(optional)</span></label>
+                <input class="field-input" type="text" id="taskNotes" placeholder="Any extra context..."
+                  autocomplete="off">
+              </div>
+              <div class="form-footer">
+                <button type="submit" class="btn-add" id="addTaskBtn">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                  Add Task
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="panel intensity-panel">
+            <div class="panel-header">
+              <span class="panel-title">Sprint Intensity</span>
+            </div>
+            <div class="intensity-row">
+              <div class="intensity-card active" data-intensity="soft">
+                <div class="intensity-name">Soft</div>
+                <div class="intensity-desc">Warns on distraction, no hard block</div>
+              </div>
+              <div class="intensity-card" data-intensity="medium">
+                <div class="intensity-name">Medium</div>
+                <div class="intensity-desc">Redirects blocked sites</div>
+              </div>
+              <div class="intensity-card" data-intensity="hard">
+                <div class="intensity-name">Hard</div>
+                <div class="intensity-desc">Full lock until sprint ends</div>
               </div>
             </div>
-            <div class="field-group">
-              <label class="field-label">Notes <span style="opacity:.45;font-weight:400">(optional)</span></label>
-              <input class="field-input" type="text" id="taskNotes"
-                     placeholder="Any extra context..." autocomplete="off">
-            </div>
-            <div class="form-footer">
-              <button type="submit" class="btn-add" id="addTaskBtn">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                Add Task
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
 
-        <div class="panel intensity-panel">
-          <div class="panel-header">
-            <span class="panel-title">Sprint Intensity</span>
-          </div>
-          <div class="intensity-row">
-            <div class="intensity-card active" data-intensity="soft">
-              <div class="intensity-name">Soft</div>
-              <div class="intensity-desc">Warns on distraction, no hard block</div>
+        <!-- RIGHT: Task List -->
+        <div class="tasks-right">
+          <div class="panel task-list-panel">
+            <div class="panel-header">
+              <span class="panel-title">Today's Tasks</span>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <button class="btn-refresh" id="refreshTasksBtn" onclick="tasksPage && tasksPage.refreshTasks()"
+                  title="Refresh tasks">
+                  ↻ Refresh
+                </button>
+                <span class="panel-progress-pct" id="progressPercent">0%</span>
+              </div>
             </div>
-            <div class="intensity-card" data-intensity="medium">
-              <div class="intensity-name">Medium</div>
-              <div class="intensity-desc">Redirects blocked sites</div>
+            <div class="task-progress-bar">
+              <div class="task-progress-fill" id="progressBar" style="width:0%"></div>
             </div>
-            <div class="intensity-card" data-intensity="hard">
-              <div class="intensity-name">Hard</div>
-              <div class="intensity-desc">Full lock until sprint ends</div>
+            <div class="task-progress-label" id="progressText">0 of 0 tasks completed</div>
+            <div id="tasksList" class="task-list">
+              <div class="empty-state">
+                <span class="empty-icon">🎯</span>
+                <span class="empty-text">No tasks yet.</span>
+                <span class="empty-cta-text">Add one to get started!</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- RIGHT: Task List -->
-      <div class="tasks-right">
-        <div class="panel task-list-panel">
-          <div class="panel-header">
-            <span class="panel-title">Today's Tasks</span>
-            <span class="panel-progress-pct" id="progressPercent">0%</span>
-          </div>
-          <div class="task-progress-bar">
-            <div class="task-progress-fill" id="progressBar" style="width:0%"></div>
-          </div>
-          <div class="task-progress-label" id="progressText">0 of 0 tasks completed</div>
-          <div id="tasksList" class="task-list">
-            <div class="empty-state">
-              <span class="empty-icon">🎯</span>
-              <span class="empty-text">No tasks yet.</span>
-              <span class="empty-cta-text">Add one to get started!</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      </div><!-- /tasks-grid -->
+    </main>
+  </div>
 
-    </div><!-- /tasks-grid -->
-  </main>
-</div>
-
-<div id="auth-root"></div>
-<script src="js/lib/db.js"></script>
-<script src="js/lib/auth.js"></script>
-<script src="js/lib/utils.js"></script>
-<script src="js/clock.js"></script>
-<script src="js/tasks.js"></script>
-<script src="js/app.js"></script>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-<script src="js/auth-ui.js"></script>
-<script>
-  document.querySelectorAll('.intensity-card').forEach(card => {
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.intensity-card').forEach(c => c.classList.remove('active'));
-      card.classList.add('active');
+  <div id="auth-root"></div>
+  <script src="js/lib/db.js"></script>
+  <script src="js/lib/auth.js"></script>
+  <script src="js/lib/utils.js"></script>
+  <script src="js/clock.js"></script>
+  <script src="js/tasks.js"></script>
+  <script src="js/app.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="js/auth-ui.js"></script>
+  <script>
+    document.querySelectorAll('.intensity-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.intensity-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+      });
     });
-  });
-</script>
+  </script>
 </body>
+
 </html>

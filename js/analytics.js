@@ -8,12 +8,13 @@ class AnalyticsPage {
   constructor() {
     this.user = auth.getUser();
     this.sprints = [];
-    this.stats   = null;
+    this.stats = null;
     this.init();
   }
 
   async init() {
     if (!this.user) return;
+    await db.init();
     this.updateHeader();
     await this.loadAll();
     this.buildHeatmap();
@@ -21,8 +22,8 @@ class AnalyticsPage {
 
   updateHeader() {
     const name = this.user.username || this.user.email || 'User';
-    const av   = document.getElementById('userAvatar');
-    const un   = document.getElementById('username');
+    const av = document.getElementById('userAvatar');
+    const un = document.getElementById('username');
     if (av) av.textContent = name.slice(0, 2).toUpperCase();
     if (un) un.textContent = name;
   }
@@ -39,10 +40,10 @@ class AnalyticsPage {
       this.sprints = await db.queryByIndex('sprints', 'userId', uid).catch(() => []);
 
       // Load today's tasks for EOD bar
-      const tasks   = await db.queryByIndex('tasks', 'userId', uid).catch(() => []);
-      const today   = new Date().toDateString();
-      const todayT  = tasks.filter(t => new Date(t.createdAt).toDateString() === today);
-      const doneT   = todayT.filter(t => t.status === 'completed').length;
+      const tasks = await db.queryByIndex('tasks', 'userId', uid).catch(() => []);
+      const today = new Date().toDateString();
+      const todayT = tasks.filter(t => new Date(t.createdAt).toDateString() === today);
+      const doneT = todayT.filter(t => t.status === 'completed').length;
       if (window.updateEodProgress) window.updateEodProgress(doneT, todayT.length);
 
       this.renderStats();
@@ -56,29 +57,29 @@ class AnalyticsPage {
 
   /* ── Stat cards ──────────────────────────────────── */
   renderStats() {
-    const total   = this.sprints.length;
-    const totScore= this.sprints.reduce((s, sp) => s + (sp.score || 0), 0);
-    const avg     = total > 0 ? Math.round(totScore / total) : 0;
-    const streak  = this.stats?.streak || 0;
+    const total = this.sprints.length;
+    const totScore = this.sprints.reduce((s, sp) => s + (sp.score || 0), 0);
+    const avg = total > 0 ? Math.round(totScore / total) : 0;
+    const streak = this.stats?.streak || 0;
 
     this._countUp('totalSprintsAna', total);
-    this._countUp('avgScoreAna',     avg);
-    this._countUp('totalScoreAna',   totScore);
-    this._countUp('streakAna',       streak);
+    this._countUp('avgScoreAna', avg);
+    this._countUp('totalScoreAna', totScore);
+    this._countUp('streakAna', streak);
 
     const sprintBadge = document.getElementById('sprintCountBadge');
-    const avgBadge    = document.getElementById('avgScoreBadge');
+    const avgBadge = document.getElementById('avgScoreBadge');
     if (sprintBadge) sprintBadge.textContent = `${total} total`;
-    if (avgBadge)    avgBadge.textContent     = `Avg: ${avg} pts`;
+    if (avgBadge) avgBadge.textContent = `Avg: ${avg} pts`;
   }
 
   _countUp(id, target) {
     const el = document.getElementById(id);
     if (!el) return;
     if (target === 0) { el.textContent = '0'; return; }
-    const dur   = 700;
+    const dur = 700;
     const start = performance.now();
-    const tick  = now => {
+    const tick = now => {
       const t = Math.min((now - start) / dur, 1);
       el.textContent = Math.round(t * t * (3 - 2 * t) * target);
       if (t < 1) requestAnimationFrame(tick);
@@ -142,11 +143,11 @@ class AnalyticsPage {
     const max = Math.max(...Object.values(cats));
     const colors = {
       'deep-work': 'var(--yellow)',
-      creative:    'var(--blue)',
-      learning:    'var(--purple)',
-      admin:       'var(--t-3)',
-      meeting:     'var(--red)',
-      general:     'var(--t-2)',
+      creative: 'var(--blue)',
+      learning: 'var(--purple)',
+      admin: 'var(--t-3)',
+      meeting: 'var(--red)',
+      general: 'var(--t-2)',
     };
 
     const sorted = Object.entries(cats).sort((a, b) => b[1] - a[1]);
@@ -163,7 +164,7 @@ class AnalyticsPage {
 
   /* ── Score trend chart ───────────────────────────── */
   renderScoreChart() {
-    const chartEl  = document.getElementById('scoreChart');
+    const chartEl = document.getElementById('scoreChart');
     const labelsEl = document.getElementById('scoreChartLabels');
     if (!chartEl) return;
 
@@ -178,7 +179,7 @@ class AnalyticsPage {
       .slice(-14);
 
     const maxScore = Math.max(...recent.map(s => s.score || 0), 1);
-    const bestIdx  = recent.reduce((bi, s, i) => s.score > recent[bi].score ? i : bi, 0);
+    const bestIdx = recent.reduce((bi, s, i) => s.score > recent[bi].score ? i : bi, 0);
 
     chartEl.innerHTML = recent.map((s, i) => {
       const pct = Math.max(((s.score || 0) / maxScore) * 100, 3);
@@ -208,21 +209,21 @@ class AnalyticsPage {
       dateCounts[d] = (dateCounts[d] || 0) + 1;
     });
 
-    const today    = new Date();
-    const end      = new Date(today);
+    const today = new Date();
+    const end = new Date(today);
     // Go back 364 days
-    const start    = new Date(today);
+    const start = new Date(today);
     start.setDate(start.getDate() - 363);
 
     // Pad to start of week (Sunday)
     while (start.getDay() !== 0) start.setDate(start.getDate() - 1);
 
     const cells = [];
-    const cur   = new Date(start);
+    const cur = new Date(start);
     let activeDays = 0;
 
     while (cur <= end) {
-      const key   = cur.toDateString();
+      const key = cur.toDateString();
       const count = dateCounts[key] || 0;
       if (count > 0) activeDays++;
       const level = count === 0 ? 0 : count === 1 ? 1 : count <= 3 ? 2 : count <= 5 ? 3 : 4;
@@ -245,8 +246,8 @@ class AnalyticsPage {
 
   _esc(s) {
     return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 }
 

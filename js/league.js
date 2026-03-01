@@ -5,23 +5,24 @@
 
 class LeaguePage {
   constructor() {
-    this.user     = auth.getUser();
+    this.user = auth.getUser();
     this.allUsers = [];
-    this.sprints  = [];
-    this.myStats  = null;
+    this.sprints = [];
+    this.myStats = null;
     this.init();
   }
 
   async init() {
     if (!this.user) return;
+    await db.init();
     this.updateHeader();
     await this.loadAll();
   }
 
   updateHeader() {
     const name = this.user.username || this.user.email || 'User';
-    const av   = document.getElementById('userAvatar');
-    const un   = document.getElementById('username');
+    const av = document.getElementById('userAvatar');
+    const un = document.getElementById('username');
     if (av) av.textContent = name.slice(0, 2).toUpperCase();
     if (un) un.textContent = name;
   }
@@ -32,14 +33,14 @@ class LeaguePage {
 
       // Load everything
       this.allUsers = await db.getAllRecords('users').catch(() => []);
-      this.myStats  = await db.getRecord('stats', uid).catch(() => null);
-      this.sprints  = await db.queryByIndex('sprints', 'userId', uid).catch(() => []);
+      this.myStats = await db.getRecord('stats', uid).catch(() => null);
+      this.sprints = await db.queryByIndex('sprints', 'userId', uid).catch(() => []);
 
       // Today's tasks for EOD bar
-      const tasks  = await db.queryByIndex('tasks', 'userId', uid).catch(() => []);
-      const today  = new Date().toDateString();
+      const tasks = await db.queryByIndex('tasks', 'userId', uid).catch(() => []);
+      const today = new Date().toDateString();
       const todayT = tasks.filter(t => new Date(t.createdAt).toDateString() === today);
-      const doneT  = todayT.filter(t => t.status === 'completed').length;
+      const doneT = todayT.filter(t => t.status === 'completed').length;
       if (window.updateEodProgress) window.updateEodProgress(doneT, todayT.length);
 
       await this.renderStats();
@@ -49,8 +50,8 @@ class LeaguePage {
   }
 
   async renderStats() {
-    const uid       = this.user.id || this.user.userId;
-    const myScore   = this.myStats?.totalScore  || 0;
+    const uid = this.user.id || this.user.userId;
+    const myScore = this.myStats?.totalScore || 0;
     const mySprints = this.myStats?.totalSprints || 0;
 
     // Build global leaderboard to find rank
@@ -60,14 +61,14 @@ class LeaguePage {
       lb.push({ id: u.id, score: s?.totalScore || 0 });
     }
     lb.sort((a, b) => b.score - a.score);
-    const rank    = lb.findIndex(r => r.id === uid) + 1;
+    const rank = lb.findIndex(r => r.id === uid) + 1;
     const rankStr = rank > 0 ? `#${rank}` : '#—';
 
-    this._set('userRank',      rankStr);
-    this._set('rankSub',       rank > 0 ? `of ${this.allUsers.length} players` : 'be first!');
-    this._countUp('leaguePoints',  myScore);
+    this._set('userRank', rankStr);
+    this._set('rankSub', rank > 0 ? `of ${this.allUsers.length} players` : 'be first!');
+    this._countUp('leaguePoints', myScore);
     this._countUp('leagueSprints', mySprints);
-    this._set('playerCount',   this.allUsers.length);
+    this._set('playerCount', this.allUsers.length);
   }
 
   async renderLeaderboard() {
@@ -80,17 +81,17 @@ class LeaguePage {
       try {
         const s = await db.getRecord('stats', u.id).catch(() => null);
         lb.push({
-          user:     u,
-          score:    s?.totalScore   || 0,
-          sprints:  s?.totalSprints || 0,
+          user: u,
+          score: s?.totalScore || 0,
+          sprints: s?.totalSprints || 0,
         });
-      } catch (_) {}
+      } catch (_) { }
     }
     lb.sort((a, b) => b.score - a.score);
 
-    const myId    = this.user.id || this.user.userId;
-    const palette = ['#ffd700','#c0c0c0','#cd7f32','#e8ff47','#47c8ff','#a87fff','#ff8c42'];
-    const ranks   = ['gold','silver','bronze'];
+    const myId = this.user.id || this.user.userId;
+    const palette = ['#ffd700', '#c0c0c0', '#cd7f32', '#e8ff47', '#47c8ff', '#a87fff', '#ff8c42'];
+    const ranks = ['gold', 'silver', 'bronze'];
 
     if (lb.length === 0) {
       el.innerHTML = `
@@ -102,12 +103,12 @@ class LeaguePage {
     }
 
     el.innerHTML = lb.map((item, i) => {
-      const isYou   = item.user.id === myId;
-      const rank    = i + 1;
-      const name    = this._esc(item.user.username || item.user.email.split('@')[0]);
-      const initials= name.slice(0, 2).toUpperCase();
+      const isYou = item.user.id === myId;
+      const rank = i + 1;
+      const name = this._esc(item.user.username || item.user.email.split('@')[0]);
+      const initials = name.slice(0, 2).toUpperCase();
       const rankCls = i < 3 ? ranks[i] : (isYou ? 'you-marker' : '');
-      const color   = palette[i % palette.length];
+      const color = palette[i % palette.length];
 
       return `
         <div class="leaderboard-row ${isYou ? 'is-you' : ''}"
@@ -130,10 +131,10 @@ class LeaguePage {
     const grid = document.getElementById('badgesGrid');
     if (!grid) return;
 
-    const uid       = this.user.id || this.user.userId;
-    const total     = this.sprints.length;
-    const streak    = this.myStats?.streak || 0;
-    const score     = this.myStats?.totalScore || 0;
+    const uid = this.user.id || this.user.userId;
+    const total = this.sprints.length;
+    const streak = this.myStats?.streak || 0;
+    const score = this.myStats?.totalScore || 0;
     const hardCount = this.sprints.filter(s => s.difficulty === 'hard').length;
 
     const BADGES = [
@@ -187,9 +188,9 @@ class LeaguePage {
     const el = document.getElementById(id);
     if (!el) return;
     if (target === 0) { el.textContent = '0'; return; }
-    const dur   = 700;
+    const dur = 700;
     const start = performance.now();
-    const tick  = now => {
+    const tick = now => {
       const t = Math.min((now - start) / dur, 1);
       el.textContent = Math.round(t * t * (3 - 2 * t) * target);
       if (t < 1) requestAnimationFrame(tick);
@@ -199,8 +200,8 @@ class LeaguePage {
 
   _esc(s) {
     return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 }
 

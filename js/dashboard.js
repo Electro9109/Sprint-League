@@ -10,6 +10,7 @@ class Dashboard {
 
   async init() {
     if (!this.user) return;
+    await db.init();
     this.updateHeader();
     await this.loadTodaysTasks();
     await this.loadStats();
@@ -21,9 +22,9 @@ class Dashboard {
     const first = name.split(' ')[0];
 
     const avatarEl = document.getElementById('userAvatar');
-    const userEl   = document.getElementById('username');
+    const userEl = document.getElementById('username');
     if (avatarEl) avatarEl.textContent = name.slice(0, 2).toUpperCase();
-    if (userEl)   userEl.textContent   = name;
+    if (userEl) userEl.textContent = name;
 
     const titleEl = document.getElementById('pageTitle');
     if (titleEl) titleEl.textContent = `Hey, ${first}`;
@@ -31,19 +32,19 @@ class Dashboard {
 
   async loadTodaysTasks() {
     try {
-      const uid      = this.user.userId || this.user.id;
-      const tasks    = await db.queryByIndex('tasks', 'userId', uid);
-      const today    = new Date().toDateString();
-      const todays   = tasks.filter(t =>
+      const uid = this.user.userId || this.user.id;
+      const tasks = await db.queryByIndex('tasks', 'userId', uid);
+      const today = new Date().toDateString();
+      const todays = tasks.filter(t =>
         new Date(t.createdAt).toDateString() === today && t.status !== 'archived'
       );
-      const done     = todays.filter(t => t.status === 'completed').length;
+      const done = todays.filter(t => t.status === 'completed').length;
 
       // Stat card
       const countEl = document.getElementById('todayCount');
-      const progEl  = document.getElementById('todayProgress');
+      const progEl = document.getElementById('todayProgress');
       if (countEl) countEl.textContent = todays.length;
-      if (progEl)  progEl.textContent  = `${done} of ${todays.length} completed`;
+      if (progEl) progEl.textContent = `${done} of ${todays.length} completed`;
 
       // EOD bar
       if (window.updateEodProgress) window.updateEodProgress(done, todays.length);
@@ -78,7 +79,7 @@ class Dashboard {
         <div class="task-content">
           <div class="task-title">${this._esc(task.title)}</div>
           <div class="task-meta">
-            <span class="task-tag tag-${task.category}">${task.category.replace('-',' ')}</span>
+            <span class="task-tag tag-${task.category}">${task.category.replace('-', ' ')}</span>
             <span class="task-difficulty ${task.difficulty}">${task.difficulty}</span>
           </div>
         </div>
@@ -87,33 +88,33 @@ class Dashboard {
 
   async loadStats() {
     try {
-      const uid    = this.user.userId || this.user.id;
-      const stats  = await db.getRecord('stats', uid).catch(() => null);
-      const all    = await db.queryByIndex('sprints', 'userId', uid).catch(() => []);
-      const week   = Date.now() - 7 * 86_400_000;
+      const uid = this.user.userId || this.user.id;
+      const stats = await db.getRecord('stats', uid).catch(() => null);
+      const all = await db.queryByIndex('sprints', 'userId', uid).catch(() => []);
+      const week = Date.now() - 7 * 86_400_000;
       const recent = all.filter(s => new Date(s.createdAt) > week);
       const wScore = recent.reduce((s, sp) => s + (sp.score || 0), 0);
-      const avg    = all.length
+      const avg = all.length
         ? Math.round(all.reduce((s, sp) => s + (sp.score || 0), 0) / all.length)
         : 0;
 
-      this._countUp('sprintScore',  wScore);
-      this._countUp('streakCount',  stats?.streak || 0);
+      this._countUp('sprintScore', wScore);
+      this._countUp('streakCount', stats?.streak || 0);
       this._countUp('totalSprints', all.length);
 
       const metaEl = document.getElementById('sprintMeta');
-      const avgEl  = document.getElementById('avgScore');
+      const avgEl = document.getElementById('avgScore');
       if (metaEl) metaEl.textContent = 'Last 7 days';
-      if (avgEl)  avgEl.textContent  = `${avg} avg score`;
+      if (avgEl) avgEl.textContent = `${avg} avg score`;
     } catch (e) { console.error('loadStats:', e); }
   }
 
   _countUp(id, target) {
     const el = document.getElementById(id);
     if (!el) return;
-    const dur   = 700;
+    const dur = 700;
     const start = performance.now();
-    const tick  = now => {
+    const tick = now => {
       const t = Math.min((now - start) / dur, 1);
       el.textContent = Math.round(t * t * (3 - 2 * t) * target);
       if (t < 1) requestAnimationFrame(tick);
@@ -147,7 +148,7 @@ class Dashboard {
           <div class="sprint-content">
             <div class="sprint-title">${this._esc(s.taskName || 'Sprint')}</div>
             <div class="sprint-meta">
-              <span class="sprint-category">${(s.category || '').replace('-',' ')}</span>
+              <span class="sprint-category">${(s.category || '').replace('-', ' ')}</span>
               <span>${s.difficulty || ''}</span>
               <span>${utils.formatDate(s.createdAt)}</span>
             </div>
@@ -159,8 +160,8 @@ class Dashboard {
 
   _esc(str) {
     return String(str)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 }
 

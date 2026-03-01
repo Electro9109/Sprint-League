@@ -5,21 +5,22 @@
 
 class FriendsPage {
   constructor() {
-    this.user     = auth.getUser();
+    this.user = auth.getUser();
     this.allUsers = [];
     this.init();
   }
 
   async init() {
     if (!this.user) return;
+    await db.init();
     this.updateHeader();
     await this.loadAll();
   }
 
   updateHeader() {
     const name = this.user.username || this.user.email || 'User';
-    const av   = document.getElementById('userAvatar');
-    const un   = document.getElementById('username');
+    const av = document.getElementById('userAvatar');
+    const un = document.getElementById('username');
     if (av) av.textContent = name.slice(0, 2).toUpperCase();
     if (un) un.textContent = name;
   }
@@ -30,11 +31,11 @@ class FriendsPage {
       this.allUsers = await db.getAllRecords('users').catch(() => []);
 
       // Load today's tasks for EOD bar
-      const uid   = this.user.id || this.user.userId;
-      const tasks  = await db.queryByIndex('tasks', 'userId', uid).catch(() => []);
-      const today  = new Date().toDateString();
+      const uid = this.user.id || this.user.userId;
+      const tasks = await db.queryByIndex('tasks', 'userId', uid).catch(() => []);
+      const today = new Date().toDateString();
       const todayT = tasks.filter(t => new Date(t.createdAt).toDateString() === today);
-      const doneT  = todayT.filter(t => t.status === 'completed').length;
+      const doneT = todayT.filter(t => t.status === 'completed').length;
       if (window.updateEodProgress) window.updateEodProgress(doneT, todayT.length);
 
       await this.renderSquadStats();
@@ -63,13 +64,13 @@ class FriendsPage {
           sprintCount++;
           if (new Date(s.createdAt) > week) weekBest = Math.max(weekBest, s.score || 0);
         });
-      } catch (_) {}
+      } catch (_) { }
     }
 
     const avg = sprintCount > 0 ? Math.round(totalScore / sprintCount) : 0;
 
-    const avgEl  = document.getElementById('avgSquadScore');
-    const topEl  = document.getElementById('topSprintScore');
+    const avgEl = document.getElementById('avgSquadScore');
+    const topEl = document.getElementById('topSprintScore');
     if (avgEl) avgEl.textContent = avg;
     if (topEl) topEl.textContent = weekBest;
 
@@ -94,8 +95,8 @@ class FriendsPage {
     const withScores = [];
     for (const u of this.allUsers) {
       try {
-        const sprints   = await db.queryByIndex('sprints', 'userId', u.id);
-        const score     = sprints.reduce((s, sp) => s + (sp.score || 0), 0);
+        const sprints = await db.queryByIndex('sprints', 'userId', u.id);
+        const score = sprints.reduce((s, sp) => s + (sp.score || 0), 0);
         const sprintCnt = sprints.length;
         withScores.push({ ...u, score, sprintCnt });
       } catch (_) {
@@ -106,13 +107,13 @@ class FriendsPage {
     // Sort by score descending
     withScores.sort((a, b) => b.score - a.score);
 
-    const myId    = this.user.id || this.user.userId;
-    const palette = ['#e8ff47','#47c8ff','#a87fff','#ff8c42','#4dff91','#ff4d4d'];
+    const myId = this.user.id || this.user.userId;
+    const palette = ['#e8ff47', '#47c8ff', '#a87fff', '#ff8c42', '#4dff91', '#ff4d4d'];
 
     el.innerHTML = withScores.map((u, i) => {
-      const isYou   = u.id === myId;
-      const initials= (u.username || u.email || 'U').slice(0, 2).toUpperCase();
-      const color   = palette[i % palette.length];
+      const isYou = u.id === myId;
+      const initials = (u.username || u.email || 'U').slice(0, 2).toUpperCase();
+      const color = palette[i % palette.length];
       return `
         <div class="squad-row" style="animation-delay:${i * 40}ms">
           <div class="squad-avatar ${isYou ? 'you' : ''}" style="background:${isYou ? '' : color};color:#000">
@@ -143,27 +144,27 @@ class FriendsPage {
       return;
     }
 
-    const today  = new Date().toDateString();
-    const myId   = this.user.id || this.user.userId;
-    const rows   = [];
+    const today = new Date().toDateString();
+    const myId = this.user.id || this.user.userId;
+    const rows = [];
 
     for (const u of this.allUsers) {
       try {
         const tasks = await db.queryByIndex('tasks', 'userId', u.id);
         const todayT = tasks.filter(t => new Date(t.createdAt).toDateString() === today);
-        const doneT  = todayT.filter(t => t.status === 'completed').length;
+        const doneT = todayT.filter(t => t.status === 'completed').length;
         const totalT = todayT.length;
-        const isYou  = u.id === myId;
-        const name   = this._esc(u.username || u.email.split('@')[0]);
+        const isYou = u.id === myId;
+        const name = this._esc(u.username || u.email.split('@')[0]);
         const status = totalT === 0
           ? 'pending'
           : doneT === totalT ? 'win' : 'pending';
-        const label  = totalT === 0
+        const label = totalT === 0
           ? 'No tasks added'
           : `${doneT} / ${totalT} done`;
 
         rows.push({ name, status, label, isYou, score: doneT * 100 });
-      } catch (_) {}
+      } catch (_) { }
     }
 
     rows.sort((a, b) => b.score - a.score);
@@ -183,8 +184,8 @@ class FriendsPage {
 
   async renderChallenge() {
     // Count today's completed tasks across all users
-    const today  = new Date().toDateString();
-    let doneAll  = 0;
+    const today = new Date().toDateString();
+    let doneAll = 0;
     const target = 20;
 
     for (const u of this.allUsers) {
@@ -193,7 +194,7 @@ class FriendsPage {
         doneAll += tasks.filter(t =>
           new Date(t.createdAt).toDateString() === today && t.status === 'completed'
         ).length;
-      } catch (_) {}
+      } catch (_) { }
     }
 
     doneAll = Math.min(doneAll, target);
@@ -209,8 +210,8 @@ class FriendsPage {
 
   _esc(s) {
     return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 }
 
